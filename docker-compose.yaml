@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.1.0
+    build: ../eegfaktura-postgresql-docker
+#    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.1.0
     hostname: eegfaktura-postgresql
     environment:
       POSTGRES_USER: "postgres"
@@ -17,6 +18,8 @@ services:
       POSTGRES_INITDB_ARGS: "--locale=de_DE:UTF8"
     volumes:
       - eegfaktura_postgres_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432  
     healthcheck:
       test: "PGPASSWORD=$${DB_PASSWORD} pg_isready -d $${DB_DATABASE} -U $${DB_USERNAME} && psql --d $${DB_DATABASE} -U $${DB_USERNAME} --list"
       timeout: 10s
@@ -70,6 +73,12 @@ services:
     hostname: eegfaktura-eda
     volumes:
       - eegfaktura_eda_data:/storage
+      - ./eegfaktura-eda-config.conf:/conf/application.conf
+    environment:
+      DB_HOSTNAME: "eegfaktura-postgresql"
+      DB_USERNAME: "eegfaktura"
+      DB_PASSWORD_FILE: "/run/secrets/eegfaktura-db-password"
+      HTTP_PROTOCOL: "http"  
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -79,10 +88,12 @@ services:
         condition: service_started
 
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/eegfaktura-backend:0.1.0
+    build: ../eegfaktura-backend-docker
+#    image: ghcr.io/eegfaktura/eegfaktura-backend:0.1.0
     hostname: eegfaktura-backend
     volumes:
       - eegfaktura_backend_data:/opt/storage
+#      - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -137,7 +148,14 @@ services:
       - eegfaktura-filestore
 
   eegfaktura-proxy:
-    image: ghcr.io/eegfaktura/eegfaktura-proxy:0.1.0
+#    image: caddy
+#    ports: 
+#      - "8001:80"
+#    volumes: 
+#      - ./eegfaktura-proxy-caddy.conf:/etc/caddy/Caddyfile     
+  
+    build: ../eegfaktura-proxy-docker  
+#    image: ghcr.io/eegfaktura/eegfaktura-proxy:0.1.0
     hostname: eegfaktura-proxy
     ports:
       - "443:443"
@@ -150,24 +168,26 @@ services:
       - eegfaktura-energystore
       - eegfaktura-billing
       - eegfaktura-filestore
-      - eegfaktura-keycloak
+#      - eegfaktura-keycloak
     secrets:
       - eegfaktura-https-key
       - eegfaktura-https-cert
 
-  eegfaktura-keycloak:
-    image: ghcr.io/eegfaktura/eegfaktura-keycloak:0.1.0
-    hostname: eegfaktura-keycloak
-    environment:
-      KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
-      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_PASSWORD: "SuperSecretPassword"
-      KEYCLOAK_FRONTEND_URL: "https://yourdomain.com/auth/"
-    depends_on:
-      eegfaktura-postgresql:
-        condition: service_healthy
+#  eegfaktura-keycloak:
+#    image: ghcr.io/eegfaktura/eegfaktura-keycloak:0.1.0
+#    hostname: eegfaktura-keycloak
+#    ports:
+#      - 8080:8080
+#    environment:
+#      KC_DB_USERNAME: "keycloak"
+#      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
+#      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
+#      KEYCLOAK_ADMIN: "admin"
+#      KEYCLOAK_PASSWORD: "SuperSecretPassword"
+#      KEYCLOAK_FRONTEND_URL: "https://yourdomain.com/auth/"
+#    depends_on:
+#      eegfaktura-postgresql:
+#        condition: service_healthy
 
 volumes:
     eegfaktura_postgres_data:

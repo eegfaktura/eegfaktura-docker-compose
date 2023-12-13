@@ -1,0 +1,22 @@
+port: 8080
+database:
+  host: "eegfaktura-postgresql"
+  port: 5432
+  user: "eegfaktura"
+  password: "Dzy5lShLn1N3rqTM"
+  dbname: "eegfaktura"
+
+jwt:
+  pubKeyFile: "/run/secrets/eegfaktura-jwt-public-key"
+
+mqtt:
+  host: "tcp://eegfaktura-mosquitto:1883"
+  id: "edash-backend-1"
+  qos: 0
+
+file-content:
+  basedir: "/opt/storage/file-content/"
+  templates: "./public"
+
+services:
+  mail-server: "eegfaktura-eda:9093"
