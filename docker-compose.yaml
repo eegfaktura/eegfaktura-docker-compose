@@ -105,9 +105,9 @@ services:
       HTTP_PORT: 8080
       HTTP_FILE_DL_ENDPOINT: "filestore"
       FILESTORE_LOCAL_BASE_DIR: "/eegfaktura-filestore-data"
-      FILESTORE_CREATE_UNKNOWN_CATEGORY: true
-      FILESTORE_CREATE_UNKNOWN_CONTAINER: true
-      FILESTORE_CREATE_UNKNOWN_STORAGE: true
+      FILESTORE_CREATE_UNKNOWN_CATEGORY: "true"
+      FILESTORE_CREATE_UNKNOWN_CONTAINER: "true"
+      FILESTORE_CREATE_UNKNOWN_STORAGE: "true"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -128,8 +128,10 @@ services:
         condition: service_started
 
   eegfaktura-web:
-    image: ghcr.io/eegfaktura/eegfaktura-web:0.1.0
+    image: eegfaktura-web:latest # This needs updated with new version in my PR. 
     hostname: eegfaktura-web
+    environment:
+      REACT_APP_AUTH_SERVER_URL: https://localhost/auth/  # This does not work but it would be great if it did...
     depends_on:
       - eegfaktura-backend
       - eegfaktura-energystore
@@ -156,15 +158,15 @@ services:
       - eegfaktura-https-cert
 
   eegfaktura-keycloak:
-    image: ghcr.io/eegfaktura/eegfaktura-keycloak:0.1.0
+    image: eegfaktura-keycloak:latest # This image need re-built and updated to quay.io/keycloak/keycloak:latest
     hostname: eegfaktura-keycloak
     environment:
       KC_DB_USERNAME: "keycloak"
       KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
       KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
       KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_PASSWORD: "SuperSecretPassword"
-      KEYCLOAK_FRONTEND_URL: "https://yourdomain.com/auth/"
+      KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
+      KC_HOSTNAME: "https://localhost/auth/"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
