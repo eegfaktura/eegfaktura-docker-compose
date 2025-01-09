@@ -1,6 +1,31 @@
 #!/bin/bash
 set -e
 
+# Function to load passwords from files
+load_password_from_file() {
+    local password_var_name=$1
+    local password_file_var_name=$2
+    local password_file=${!password_file_var_name}
+
+    if [[ -z "${!password_var_name}" && -n "$password_file" && -f "$password_file" ]]; then
+        echo "Loading ${password_var_name} from file '$password_file'."
+        local password_value=$(head -n 1 "$password_file")
+        if [[ -z "$password_value" ]]; then
+            echo "Error: $password_file_var_name file is empty."
+            exit 1
+        fi
+        export $password_var_name=$password_value
+        echo "${password_var_name} loaded successfully."
+    elif [[ -n "${!password_var_name}" ]]; then
+        echo "${password_var_name} is already set."
+    else
+        echo "$password_file_var_name not set, does not exist, or $password_var_name already set."
+    fi
+}
+
+# Load DB_PASSWORD and KEYCLOAK_DB_PASSWORD from files if needed
+load_password_from_file "DB_PASSWORD" "DB_PASSWORD_FILE"
+
 # Check and log missing environment variables
 missing_vars=()
 
