@@ -29,7 +29,7 @@ docker compose up
 
 3. Create Manager User
    
-- Open Keycloak and login as admin. Passwort: SuperSecretPassword
+- Open Keycloak http://localhost:9180 and login as admin. Passwort: SuperSecretPassword
 - Create a new user in the EEGFaktura Realm
 - Assign role **Manager** to the User
 
