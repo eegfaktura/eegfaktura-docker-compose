@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-postgresql:latest
+#    build: ../eegfaktura-postgresql-docker
     hostname: eegfaktura-postgresql
     environment:
       POSTGRES_USER: "postgres"
@@ -27,7 +28,23 @@ services:
       - eegfaktura-postgres-password
       - eegfaktura-db-password
       - eegfaktura-keycload-db-password
-
+      
+  eegfaktura-db-migrate:
+    image: ghcr.io/eegfaktura/vfeeg-backend:latest
+    hostname: eegfaktura-backend-migrate
+    command: vfeeg-backend migrate --configPath /etc/backend
+#    volumes: 
+#      - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
+    environment:
+      VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
+      VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
+      VFEEG_BACKEND_DATABASE_HOST: "eegfaktura-postgresql"
+      VFEEG_BACKEND_DATABASE_PORT: "5432"
+    depends_on:
+      eegfaktura-postgresql:
+        condition: service_healthy
+    
   eegfaktura-mosquitto:
     image: ghcr.io/eegfaktura/eegfaktura-mosquitto:0.1.0
     hostname: eegfaktura-mosquitto
@@ -56,40 +73,150 @@ services:
       - eegfaktura-smtp-password
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:0.1.0
+    image: ghcr.io/eegfaktura/energy-store:latest
     hostname: eegfaktura-energystore
+    environment:
+      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycload-json"
+      ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
+      ENERGYSTORE_SERVICES_master-server: "eegfaktura-backend:9092"
+      ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
     volumes:
       - eegfaktura_energystore_data:/opt/rawdata
     depends_on:
-      - eegfaktura-mosquitto
-    secrets:
-      - eegfaktura-jwt-public-key
-
-  eegfaktura-eda:
-    image: ghcr.io/eegfaktura/eegfaktura-eda:0.1.0
-    hostname: eegfaktura-eda
-    volumes:
-      - eegfaktura_eda_data:/storage
-    depends_on:
-      eegfaktura-postgresql:
-        condition: service_healthy
       eegfaktura-mosquitto:
         condition: service_started
-      eegfaktura-postfix:
-        condition: service_started
-
+      eegfaktura-keycloak:
+        condition: service_healthy        
+    secrets:
+      - eegfaktura-keycload-json
+      
+  eegfaktura-web:
+    image: ghcr.io/eegfaktura/vfeeg-web:latest
+    hostname: eegfaktura-web
+    volumes:
+      - ./keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
+    depends_on:
+      - eegfaktura-backend
+#      - eegfaktura-energystore
+#      - eegfaktura-billing
+#      - eegfaktura-filestore   
+      
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/eegfaktura-backend:0.1.0
+    image: ghcr.io/eegfaktura/vfeeg-backend:latest
     hostname: eegfaktura-backend
+    command: vfeeg-backend server --configPath /etc/backend    
     volumes:
       - eegfaktura_backend_data:/opt/storage
+    environment:
+      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycload-json"
+      VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
+      VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
+      VFEEG_BACKEND_DATABASE_HOST: "eegfaktura-postgresql"
+      VFEEG_BACKEND_DATABASE_PORT: "5432"
+      VFEEG_BACKEND_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"     
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
       eegfaktura-mosquitto:
         condition: service_started
+      eegfaktura-keycloak:
+        condition: service_healthy
     secrets:
-      - eegfaktura-jwt-public-key
+      - eegfaktura-keycload-json
+
+  eegfaktura-proxy:
+    image: caddy
+    ports: 
+      - "8001:80"
+      - "8002:81"      
+    volumes: 
+      - ./caddy/caddy.conf:/etc/caddy/Caddyfile
+    depends_on:
+      - eegfaktura-web
+      - eegfaktura-backend
+      - eegfaktura-energystore
+#      - eegfaktura-billing
+#      - eegfaktura-filestore
+      - eegfaktura-keycloak
+
+  eegfaktura-keycloak:
+    image: ghcr.io/eegfaktura/eegfaktura-keycloak:latest
+    hostname: eegfaktura-keycloak
+    command: start --optimized --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    environment:
+      KC_DB_USERNAME: "keycloak"
+      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
+      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+#      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
+      PROXY_ADDRESS_FORWARDING: true
+      KC_PROXY: edge
+      KC_HOSTNAME_DEBUG: true
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
+      KEYCLOAK_FRONTEND_URL: "http://eegfaktura-keycloak:9180"
+      KC_HTTP_MANAGEMENT_PORT: "9181"
+    ports: 
+      - "9180:8080"
+      - "9181:9181"
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "exec 3<>/dev/tcp/localhost/8080; \
+        echo -en 'GET /health/ready' >&3; \
+        # Give the server a moment to respond, then search for 'UP'
+        if timeout 3 cat <&3 | grep -m 1 'UP'; then \
+          exec 3<&-; exec 3>&-; exit 0; \
+        else \
+          exec 3<&-; exec 3>&-; exit 1; \
+        fi"
+      ]
+      start_period: 10s
+      interval: 5s
+      timeout: 2s
+      retries: 20               
+    depends_on:
+      eegfaktura-postgresql:
+        condition: service_healthy
+        
+  eegfaktura-admin-backend:
+    image: ghcr.io/eegfaktura/eeg-registration-backend:latest
+    hostname: eegfaktura-admin-backend
+    command: /opt/docker/bin/eegfaktura-registration
+    environment:
+      KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycload-json"
+      DATABASE_USER: "eegfaktura"
+      DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      DATABASE_DBNAME: "eegfaktura"
+      DATABASE_HOST: "eegfaktura-postgresql"
+      DATABASE_PORT: "5432"
+      REGISTER_SERVICE_HOST_EEG: "eegfaktura-backend"
+    depends_on:
+      eegfaktura-postgresql:
+        condition: service_healthy
+      eegfaktura-mosquitto:
+        condition: service_started
+      eegfaktura-keycloak:
+        condition: service_healthy
+    secrets:
+      - eegfaktura-keycload-json
+              
+  eegfaktura-admin-web:
+    image: ghcr.io/eegfaktura/eeg-registration-frontend:latest
+    hostname: eegfaktura-admin-web
+    volumes:
+      - ./keycloak-web.json:/var/www/html/registration-web/config/keycloak-config.json 
+    depends_on:
+      eegfaktura-postgresql:
+        condition: service_healthy
+      eegfaktura-mosquitto:
+        condition: service_started
+      eegfaktura-keycloak:
+        condition: service_healthy
 
   eegfaktura-filestore:
     image: ghcr.io/eegfaktura/eegfaktura-filestore:0.1.0
@@ -126,49 +253,7 @@ services:
         condition: service_healthy
       eegfaktura-postfix:
         condition: service_started
-
-  eegfaktura-web:
-    image: ghcr.io/eegfaktura/eegfaktura-web:0.1.0
-    hostname: eegfaktura-web
-    depends_on:
-      - eegfaktura-backend
-      - eegfaktura-energystore
-      - eegfaktura-billing
-      - eegfaktura-filestore
-
-  eegfaktura-proxy:
-    image: ghcr.io/eegfaktura/eegfaktura-proxy:0.1.0
-    hostname: eegfaktura-proxy
-    ports:
-      - "443:443"
-    environment:
-      KEY_FILE: /run/secrets/eegfaktura-https-key
-      CERT_FILE: /run/secrets/eegfaktura-https-cert
-    depends_on:
-      - eegfaktura-web
-      - eegfaktura-backend
-      - eegfaktura-energystore
-      - eegfaktura-billing
-      - eegfaktura-filestore
-      - eegfaktura-keycloak
-    secrets:
-      - eegfaktura-https-key
-      - eegfaktura-https-cert
-
-  eegfaktura-keycloak:
-    image: ghcr.io/eegfaktura/eegfaktura-keycloak:0.1.0
-    hostname: eegfaktura-keycloak
-    environment:
-      KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
-      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_PASSWORD: "SuperSecretPassword"
-      KEYCLOAK_FRONTEND_URL: "https://yourdomain.com/auth/"
-    depends_on:
-      eegfaktura-postgresql:
-        condition: service_healthy
-
+      
 volumes:
     eegfaktura_postgres_data:
     eegfaktura_mosquitto_data:
@@ -193,3 +278,5 @@ secrets:
       file: ./eegfaktura-smtp-password.txt
   eegfaktura-keycload-db-password:
       file: ./eegfaktura-keycload-db-password.txt
+  eegfaktura-keycload-json:
+      file: ./keycloak.json
