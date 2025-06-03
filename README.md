@@ -52,9 +52,16 @@ docker compose up
 6. Create a EEG
    
 open the Admin Portal on http://localhost:8002
+
 Register a new EEG
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
+
+```
+RC-Nummer: TE100200
+Gemeinschafts-ID: AT00999900000TC100200000000000002
+Netzbetreiber-ID: AT009999
+```
 
 7. Open EEGFaktura
    
@@ -63,4 +70,9 @@ Login with the EEG user
 Upload Masterdata and Energie data
 
 ![image](https://github.com/user-attachments/assets/f39a41c7-155f-4910-b088-5390369a737a)
+
+```
+Stammdaten: TE100200-Muster-Stammdatenimport.xlsx
+Energiedaten: TEST_EEG_Report_AT00999900000TE100100.xlsx
+```
 
