@@ -29,11 +29,13 @@ docker compose up
 
 3. Create Manager User
    
-Open Keycloak and login as admin. Passwort: SuperSecretPassword
-Create a new user in the EEGFaktura Realm
-Assign role 'Manager' to the User
+- Open Keycloak and login as admin. Passwort: SuperSecretPassword
+- Create a new user in the EEGFaktura Realm
+- Assign role **Manager** to the User
 
-5. Re-create client 'admin-cli' Secret-Key
+![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
+
+4. Re-create client 'admin-cli' Secret-Key
 
 ![image](https://github.com/user-attachments/assets/dc7f870d-6790-4787-9d2e-833aca2ba6d4)
 
@@ -65,9 +67,9 @@ Netzbetreiber-ID: AT009999
 
 7. Open EEGFaktura
    
-Open the Platform on http://localhost:8001
-Login with the EEG user
-Upload Masterdata and Energie data
+- Open the Platform on http://localhost:8001
+- Log in using the credentials provided during the creation process. (Step 6)
+- Upload Masterdata and Energiedata
 
 ![image](https://github.com/user-attachments/assets/f39a41c7-155f-4910-b088-5390369a737a)
 
