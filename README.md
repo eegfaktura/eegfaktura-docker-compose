@@ -20,35 +20,47 @@ Make sure you have the following installed:
 ```bash
 git clone https://github.com/eegfaktura/eegfaktura-docker-compose.git
 cd eegfaktura-docker-compose
+```
 
 2. Start docker compose
-´´´bash
+```bash
 docker compose up
+```
 
 3. Create Manager User
+   
 Open Keycloak and login as admin. Passwort: SuperSecretPassword
 Create a new user in the EEGFaktura Realm
 Assign role 'Manager' to the User
 
-4. Re-create client 'admin-cli' Secret-Key
-Copy the new generated key to the file keycloak/keycloak.json
-  Section 'admin-cli' -> secret
+5. Re-create client 'admin-cli' Secret-Key
+
+![image](https://github.com/user-attachments/assets/dc7f870d-6790-4787-9d2e-833aca2ba6d4)
+
+Copy the new generated key to the file **keycloak/keycloak.json**
+Section 'admin-cli' -> secret
+
+![image](https://github.com/user-attachments/assets/556edffd-a5ea-4f07-ac35-30873b96e4aa)
+
 
 5. Restart docker compose
+```bash
 docker compose down
 docker compose up
+```
 
 6. Create a EEG
+   
 open the Admin Portal on http://localhost:8002
 Register a new EEG
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
 
-Add an user, provide other settings.
-
 7. Open EEGFaktura
+   
 Open the Platform on http://localhost:8001
 Login with the EEG user
 Upload Masterdata and Energie data
 
+![image](https://github.com/user-attachments/assets/f39a41c7-155f-4910-b088-5390369a737a)
 
