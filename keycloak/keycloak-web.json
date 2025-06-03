@@ -1,0 +1,32 @@
+{
+  "app" : {
+    "realm": "EEGFaktura",
+    "auth-server-url": "http://localhost:9180",
+    "ssl-required": "external",
+    "resource": "at.ourproject.vfeeg.app",
+    "public-client": true,
+    "verify-token-audience": true,
+    "use-resource-role-mappings": true,
+    "confidential-port": 0
+  },
+  "api" : {
+    "realm": "EEGFaktura",
+    "auth-server-url": "http://localhost:9180",
+    "ssl-required": "external",
+    "resource": "at.ourproject.vfeeg.api",
+    "public-client": true,
+    "verify-token-audience": true,
+    "use-resource-role-mappings": true,
+    "confidential-port": 0
+  },
+  "admin" : {
+    "realm": "EEGFaktura",
+    "auth-server-url": "http://localhost:9180",
+    "ssl-required": "external",
+    "resource": "at.ourproject.vfeeg.admin",
+    "public-client": true,
+    "verify-token-audience": true,
+    "use-resource-role-mappings": true,
+    "confidential-port": 0
+  }    
+}

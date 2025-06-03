@@ -94,7 +94,7 @@ services:
     image: ghcr.io/eegfaktura/vfeeg-web:latest
     hostname: eegfaktura-web
     volumes:
-      - ./keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
+      - ./keycloak/keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
     depends_on:
       - eegfaktura-backend
 #      - eegfaktura-energystore
@@ -145,7 +145,7 @@ services:
     hostname: eegfaktura-keycloak
     command: start --optimized --import-realm
     volumes:
-      - ./keycloak:/opt/keycloak/data/import
+      - ./keycloak/import:/opt/keycloak/data/import
     environment:
       KC_DB_USERNAME: "keycloak"
       KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
@@ -209,7 +209,7 @@ services:
     image: ghcr.io/eegfaktura/eeg-registration-frontend:latest
     hostname: eegfaktura-admin-web
     volumes:
-      - ./keycloak-web.json:/var/www/html/registration-web/config/keycloak-config.json 
+      - ./keycloak/keycloak-web.json:/var/www/html/registration-web/config/keycloak-config.json 
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -279,4 +279,4 @@ secrets:
   eegfaktura-keycload-db-password:
       file: ./eegfaktura-keycload-db-password.txt
   eegfaktura-keycload-json:
-      file: ./keycloak.json
+      file: ./keycloak/keycloak.json
