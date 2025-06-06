@@ -28,23 +28,7 @@ services:
       - eegfaktura-postgres-password
       - eegfaktura-db-password
       - eegfaktura-keycload-db-password
-      
-  eegfaktura-db-migrate:
-    image: ghcr.io/eegfaktura/vfeeg-backend:latest
-    hostname: eegfaktura-backend-migrate
-    command: vfeeg-backend migrate --configPath /etc/backend
-#    volumes: 
-#      - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
-    environment:
-      VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
-      VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
-      VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
-      VFEEG_BACKEND_DATABASE_HOST: "eegfaktura-postgresql"
-      VFEEG_BACKEND_DATABASE_PORT: "5432"
-    depends_on:
-      eegfaktura-postgresql:
-        condition: service_healthy
-    
+          
   eegfaktura-mosquitto:
     image: ghcr.io/eegfaktura/eegfaktura-mosquitto:0.1.0
     hostname: eegfaktura-mosquitto
@@ -97,14 +81,13 @@ services:
       - ./keycloak/keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
     depends_on:
       - eegfaktura-backend
-#      - eegfaktura-energystore
+      - eegfaktura-energystore
 #      - eegfaktura-billing
-#      - eegfaktura-filestore   
+      - eegfaktura-filestore   
       
   eegfaktura-backend:
     image: ghcr.io/eegfaktura/vfeeg-backend:latest
     hostname: eegfaktura-backend
-    command: vfeeg-backend server --configPath /etc/backend    
     volumes:
       - eegfaktura_backend_data:/opt/storage
     environment:
@@ -137,7 +120,7 @@ services:
       - eegfaktura-backend
       - eegfaktura-energystore
 #      - eegfaktura-billing
-#      - eegfaktura-filestore
+      - eegfaktura-filestore
       - eegfaktura-keycloak
 
   eegfaktura-keycloak:
