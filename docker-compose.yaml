@@ -1,7 +1,7 @@
 
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.1.1
     hostname: eegfaktura-postgresql
     networks:
       - eegfaktura_network
@@ -122,9 +122,9 @@ services:
       HTTP_PORT: 8080
       HTTP_FILE_DL_ENDPOINT: "filestore"
       FILESTORE_LOCAL_BASE_DIR: "/eegfaktura-filestore-data"
-      FILESTORE_CREATE_UNKNOWN_CATEGORY: true
-      FILESTORE_CREATE_UNKNOWN_CONTAINER: true
-      FILESTORE_CREATE_UNKNOWN_STORAGE: true
+      FILESTORE_CREATE_UNKNOWN_CATEGORY: "true"
+      FILESTORE_CREATE_UNKNOWN_CONTAINER: "true"
+      FILESTORE_CREATE_UNKNOWN_STORAGE: "true"
       DB_USERNAME: "eegfaktura"
       DB_PASSWORD_FILE: "/run/secrets/eegfaktura-db-password"
     depends_on:
