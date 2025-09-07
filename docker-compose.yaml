@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:latest
+    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.2.0
 #    build: ../eegfaktura-postgresql-docker
     hostname: eegfaktura-postgresql
     environment:
@@ -16,6 +16,8 @@ services:
       KEYCLOAK_DB_PASSWORD_FILE: "/run/secrets/eegfaktura-keycload-db-password"
       KEYCLOAK_DB_DATABASE: "keycloak"
       POSTGRES_INITDB_ARGS: "--locale=de_DE:UTF8"
+    ports:
+      - "26432:5432"  
     volumes:
       - eegfaktura_postgres_data:/var/lib/postgresql/data/
     healthcheck:
