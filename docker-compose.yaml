@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.2.0
+    image: ghcr.io/eegfaktura/eegfaktura-postgresql:latest
 #    build: ../eegfaktura-postgresql-docker
     hostname: eegfaktura-postgresql
     environment:
@@ -32,7 +30,7 @@ services:
       - eegfaktura-keycload-db-password
           
   eegfaktura-mosquitto:
-    image: ghcr.io/eegfaktura/eegfaktura-mosquitto:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-mosquitto:latest
     hostname: eegfaktura-mosquitto
     command: /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf
     volumes:
@@ -41,7 +39,7 @@ services:
 
 
   eegfaktura-postfix:
-    image: ghcr.io/eegfaktura/eegfaktura-postfix:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-postfix:latest
     hostname: eegfaktura-postfix
     environment:
       POSTFIX_RELAY_HOST: "smtp.yourdomain.com"
@@ -204,7 +202,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:latest
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -227,7 +225,7 @@ services:
       - eegfaktura-db-password
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-billing:latest
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
