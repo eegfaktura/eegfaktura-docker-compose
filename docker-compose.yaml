@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   eegfaktura-postgresql:
     image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.2.0
@@ -15,9 +13,11 @@ services:
       DB_PASSWORD_FILE: "/run/secrets/eegfaktura-db-password"
       DB_DATABASE: "eegfaktura"
       KEYCLOAK_DB_USERNAME: "keycloak"
-      KEYCLOAK_DB_PASSWORD_FILE: "/run/secrets/eegfaktura-keycload-db-password"
+      KEYCLOAK_DB_PASSWORD_FILE: "/run/secrets/eegfaktura-keycloak-db-password"
       KEYCLOAK_DB_DATABASE: "keycloak"
       POSTGRES_INITDB_ARGS: "--locale=de_DE:UTF8"
+    ports:
+      - "26432:5432"  
     volumes:
       - eegfaktura_postgres_data:/var/lib/postgresql/data/
     healthcheck:
@@ -29,10 +29,10 @@ services:
     secrets:
       - eegfaktura-postgres-password
       - eegfaktura-db-password
-      - eegfaktura-keycload-db-password
+      - eegfaktura-keycloak-db-password
           
   eegfaktura-mosquitto:
-    image: ghcr.io/eegfaktura/eegfaktura-mosquitto:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-mosquitto:latest
     hostname: eegfaktura-mosquitto
     command: /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf
     volumes:
@@ -41,7 +41,7 @@ services:
 
 
   eegfaktura-postfix:
-    image: ghcr.io/eegfaktura/eegfaktura-postfix:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-postfix:latest
     hostname: eegfaktura-postfix
     environment:
       POSTFIX_RELAY_HOST: "smtp.yourdomain.com"
@@ -62,7 +62,7 @@ services:
     image: ghcr.io/eegfaktura/energy-store:latest
     hostname: eegfaktura-energystore
     environment:
-      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycload-json"
+      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
       ENERGYSTORE_SERVICES_master-server: "eegfaktura-backend:9092"
       ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
@@ -74,7 +74,7 @@ services:
       eegfaktura-keycloak:
         condition: service_healthy        
     secrets:
-      - eegfaktura-keycload-json
+      - eegfaktura-keycloak-json
       
   eegfaktura-web:
     image: ghcr.io/eegfaktura/vfeeg-web:latest
@@ -93,7 +93,7 @@ services:
     volumes:
       - eegfaktura_backend_data:/opt/storage
     environment:
-      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycload-json"
+      KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
       VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
       VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
@@ -187,7 +187,7 @@ services:
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
-      KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycload-json"
+      KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycloak-json"
       DATABASE_USER: "eegfaktura"
       DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
       DATABASE_DBNAME: "eegfaktura"
@@ -203,7 +203,7 @@ services:
       eegfaktura-keycloak:
         condition: service_healthy
     secrets:
-      - eegfaktura-keycload-json
+      - eegfaktura-keycloak-json
               
   eegfaktura-admin-web:
     image: ghcr.io/eegfaktura/eeg-registration-frontend:latest
@@ -219,7 +219,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:latest
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -242,7 +242,7 @@ services:
       - eegfaktura-db-password
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:0.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-billing:latest
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
@@ -276,7 +276,7 @@ secrets:
     file: ./eegfaktura-proxy.crt
   eegfaktura-smtp-password:
       file: ./eegfaktura-smtp-password.txt
-  eegfaktura-keycload-db-password:
-      file: ./eegfaktura-keycload-db-password.txt
-  eegfaktura-keycload-json:
+  eegfaktura-keycloak-db-password:
+      file: ./eegfaktura-keycloak-db-password.txt
+  eegfaktura-keycloak-json:
       file: ./keycloak/keycloak.json
