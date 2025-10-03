@@ -2,9 +2,11 @@ version: "3.8"
 
 services:
   eegfaktura-postgresql:
-    image: ghcr.io/eegfaktura/eegfaktura-postgresql:latest
+    image: ghcr.io/eegfaktura/eegfaktura-postgresql:0.2.0
 #    build: ../eegfaktura-postgresql-docker
     hostname: eegfaktura-postgresql
+    ports: 
+      - "7432:5432" 
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD_FILE: "/run/secrets/eegfaktura-postgres-password"
@@ -107,6 +109,20 @@ services:
         condition: service_healthy
     secrets:
       - eegfaktura-keycload-json
+      
+  eegfaktura-eda:
+    image: ghcr.io/eegfaktura/eegfaktura-kep:latest
+    hostname: eegfaktura-eda
+    volumes:
+      - eegfaktura_eda_data:/storage/prod 
+      - ./eegfaktura-eda.application.conf:/conf/application.conf 
+    depends_on:
+      eegfaktura-postgresql:
+        condition: service_healthy
+      eegfaktura-mosquitto:
+        condition: service_started
+      eegfaktura-keycloak:
+        condition: service_healthy
 
   eegfaktura-proxy:
     image: caddy
@@ -178,6 +194,7 @@ services:
       DATABASE_HOST: "eegfaktura-postgresql"
       DATABASE_PORT: "5432"
       REGISTER_SERVICE_HOST_EEG: "eegfaktura-backend"
+      REGISTER_SERVICE_HOST_PONTON: "eegfaktura-kep"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
