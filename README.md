@@ -22,12 +22,18 @@ git clone https://github.com/eegfaktura/eegfaktura-docker-compose.git
 cd eegfaktura-docker-compose
 ```
 
-2. Start docker compose
+2. Switch branch:
+
+```bash
+git checkout version1
+```
+
+3. Start docker compose
 ```bash
 docker compose up
 ```
 
-3. Create Manager User
+4. Create Manager User
    
 - Open Keycloak http://localhost:9180 and login as admin. Passwort: SuperSecretPassword
 - Create a new user in the EEGFaktura Realm
@@ -35,7 +41,7 @@ docker compose up
 
 ![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
 
-4. Re-create client 'admin-cli' Secret-Key
+5. Re-create client 'admin-cli' Secret-Key
 
 ![image](https://github.com/user-attachments/assets/dc7f870d-6790-4787-9d2e-833aca2ba6d4)
 
@@ -45,13 +51,13 @@ Section 'admin-cli' -> secret
 ![image](https://github.com/user-attachments/assets/556edffd-a5ea-4f07-ac35-30873b96e4aa)
 
 
-5. Restart docker compose
+6. Restart docker compose
 ```bash
 docker compose down
 docker compose up
 ```
 
-6. Create a EEG
+7. Create a EEG
    
 open the Admin Portal on http://localhost:8002
 
@@ -65,7 +71,7 @@ Gemeinschafts-ID: AT00999900000TC100200000000000002
 Netzbetreiber-ID: AT009999
 ```
 
-7. Open EEGFaktura
+8. Open EEGFaktura
    
 - Open the Platform on http://localhost:8001
 - Log in using the credentials provided during the creation process. (Step 6)
