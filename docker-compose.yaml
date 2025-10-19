@@ -126,6 +126,7 @@ services:
   eegfaktura-keycloak:
     image: ghcr.io/eegfaktura/eegfaktura-keycloak:latest
     hostname: eegfaktura-keycloak
+    entrypoint: /opt/keycloak/bin/kc.sh
     command: start --optimized --import-realm
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import
