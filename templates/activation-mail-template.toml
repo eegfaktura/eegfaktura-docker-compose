@@ -1,0 +1,4 @@
+TemplateFile="AktivierungsEmail-template.html"
+InlinePictures = [
+  { Filepath="Logo_Faktura.png", contentId="eegfaktura-logo-1" }
+]

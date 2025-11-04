@@ -1,0 +1,33 @@
+port: 9080
+database:
+  host: "localhost"
+  port: 6432
+  user: "postgresuser"
+  password: "postgresPW"
+  dbname: "postgresdb"
+
+mqtt:
+  host: "tcp://localhost:1883"
+  id: "edash-backend-2"
+  qos: 1
+
+file-content:
+  basedir: "/opt/storage/filestore"
+  templates: "/opt/storage/public"
+
+grpc-provider:
+  port: 9092
+
+services:
+  mail-server: "eegfaktura-eda:9093"
+
+eda-process-versions:
+  ANFORDERUNG_PT: "03.00"
+  ANFORDERUNG_ECON: "02.00"
+  ANFORDERUNG_ECOF: "02.00"
+  ANFORDERUNG_CPF: "01.00"
+  ANFORDERUNG_ECP: "02.00"
+  ANFORDERUNG_ECC: "01.20"
+  ANFORDERUNG_CCMO: "01.20"
+  ANFORDERUNG_GN: "03.12"
+  AUFHEBUNG_CCMS: "01.10"
