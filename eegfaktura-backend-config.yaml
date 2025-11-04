@@ -12,8 +12,8 @@ mqtt:
   qos: 1
 
 file-content:
-  basedir: "../../file-content/"
-  templates: "./public"
+  basedir: "/opt/storage/filestore"
+  templates: "/opt/storage/public"
 
 grpc-provider:
   port: 9092

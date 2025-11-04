@@ -91,6 +91,7 @@ services:
     volumes:
       - eegfaktura_backend_data:/opt/storage
       - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
+      - ./templates:/opt/storage/public/templates
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"

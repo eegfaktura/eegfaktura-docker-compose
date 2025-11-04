@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aktivierung Zählpunkt</title>
+</head>
+<body>
+<p>Hallo {{.Participant.FirstName}},</p>
+<p>damit dein Zählpunkt tatsächlich Energie mit den anderen Mitgliedern austauschen kann, muss der EEG noch der Zugriff auf deine Energiedaten gewährt werden.</p>
+<p>Benötigt wird das für folgenden Zählpunkt:
+<ul>{{range .Meteringpoints }} <li>{{.}}</li> {{end}}</ul>
+Welche Schritte dafür konkret ausgeführt werden müssen, findest du auf folgender Webseite:</p>
+<p>
+    <a href="https://docs.eegfaktura.at/shelves/netz-betreiber-infos">https://docs.eegfaktura.at/shelves/netz-betreiber-infos</a>
+</p>
+<p>Wähle einfach deinen Netzbetreiber aus und folge der beschriebenen Vorgehensweise.</p>
+<p>Wir freuen uns, dass du bei uns mitmachst!</p>
+<p>Mit besten Grüßen</p>
+<div>{{.Eeg.Description}}</div>
+<div>{{.Eeg.Zip}} {{.Eeg.City}}, {{.Eeg.Street}} {{.Eeg.StreetNumber}}</div>
+{{if .Eeg.Contact.Phone.Valid}}
+<div>T: {{.Eeg.Contact.Phone.String}}</div>
+{{end}}
+{{if .Eeg.Contact.Email.Valid}}
+<div>E: {{.Eeg.Contact.Email.String}}</div>
+{{end}}
+{{if .Eeg.Website.Valid}}
+<div>{{.Eeg.Website.String}}</div>
+{{end}}
+</p>
+
+<p>versandt durch</p>
+<img src="cid:eegfaktura-logo-1" style="max-height: 90px"/>
+</body>
+</html>
