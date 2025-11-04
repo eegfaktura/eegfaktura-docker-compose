@@ -19,7 +19,7 @@ grpc-provider:
   port: 9092
 
 services:
-  mail-server: "localhost:9093"
+  mail-server: "eegfaktura-eda:9093"
 
 eda-process-versions:
   ANFORDERUNG_PT: "03.00"
