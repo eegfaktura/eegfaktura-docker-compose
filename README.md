@@ -1,3 +1,4 @@
+
 # EEGFaktura
 
 **EEGFaktura** is a platform designed for efficient invoice and billing management. This repository provides everything you need to set up and run the platform locally using Docker Compose.
@@ -41,14 +42,20 @@ docker compose up
 
 Copy the new generated key to the file **eegfaktura-admin-cli-secret.txt**
 
+5. Prepare jwt token validation certificate for the billing service
+   Navigate to the EEGFaktura Realm Settings -> Keys
+    
+![image](https://github.com/user-attachments/assets/797eeca7-a7c1-4cbd-800b-2d1ecc485431)
 
-5. Restart docker compose
+Download/copy the RS256 cert to the **jwt-public-key.pem** 
+
+6. Restart docker compose
 ```bash
 docker compose down
 docker compose up
 ```
 
-6. Create a EEG
+7. Create a EEG
    
 open the Admin Portal on http://localhost:8002
 
@@ -62,7 +69,7 @@ Gemeinschafts-ID: AT00999900000TC100200000000000002
 Netzbetreiber-ID: AT009999
 ```
 
-7. Open EEGFaktura
+8. Open EEGFaktura
    
 - Open the Platform on http://localhost:8001
 - Log in using the credentials provided during the creation process. (Step 6)
