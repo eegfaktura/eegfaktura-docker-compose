@@ -77,8 +77,10 @@ services:
   eegfaktura-web:
     image: ghcr.io/eegfaktura/vfeeg-web:latest
     hostname: eegfaktura-web
-    volumes:
-      - ./keycloak/keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
+    environment:
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_URL: "http://localhost:9180"
+      KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.app"
     depends_on:
       - eegfaktura-backend
       - eegfaktura-energystore
@@ -95,7 +97,7 @@ services:
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
-      VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      VFEEG_BACKEND_DATABASE_PASSWORD_FILE: "/run/secrets/eegfaktura-db-password"
       VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
       VFEEG_BACKEND_DATABASE_HOST: "eegfaktura-postgresql"
       VFEEG_BACKEND_DATABASE_PORT: "5432"
@@ -109,6 +111,7 @@ services:
         condition: service_healthy
     secrets:
       - eegfaktura-keycloak-json
+      - eegfaktura-db-password
       
   eegfaktura-eda:
     image: ghcr.io/eegfaktura/eegfaktura-kep:latest
@@ -142,23 +145,21 @@ services:
   eegfaktura-keycloak:
     image: ghcr.io/eegfaktura/eegfaktura-keycloak:latest
     hostname: eegfaktura-keycloak
-    command: start --optimized --import-realm
+    command: start --http-enabled=true --import-realm --optimized
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import
     environment:
-      KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
-      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_BACKCHANNEL: false
-#      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
-      PROXY_ADDRESS_FORWARDING: true
-      KC_PROXY: edge
       KC_HOSTNAME_DEBUG: true
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
-      KEYCLOAK_FRONTEND_URL: "http://eegfaktura-keycloak:9180"
-      KC_HTTP_MANAGEMENT_PORT: "9181"
+      KC_DB_USERNAME: "keycloak"
+      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
+      KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
+      KC_HTTP_ENABLED: "true"
+
+      KC_HOSTNAME: "http://localhost:9180"
+      KC_HOSTNAME_ADMIN: "http://localhost:9180"
+      KC_HOSTNAME_STRICT: "false"
     ports: 
       - "9180:8080"
       - "9181:9181"
@@ -187,14 +188,18 @@ services:
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
-      KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycloak-json"
       DATABASE_USER: "eegfaktura"
-      DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      DATABASE_PASSWORD_FILE: "/run/secrets/eegfaktura-db-password"
       DATABASE_DBNAME: "eegfaktura"
       DATABASE_HOST: "eegfaktura-postgresql"
       DATABASE_PORT: "5432"
       REGISTER_SERVICE_HOST_EEG: "eegfaktura-backend"
       REGISTER_SERVICE_HOST_PONTON: "eegfaktura-kep"
+      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_ISSUER: "http://localhost:9180"
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_ADMIN_CLI_SECRET_FILE: "/run/secrets/eegfaktura-keycloak-admincli-secret"
+      KEYCLOAK_AUDIENCE: "at.ourproject.vfeeg.admin"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -204,12 +209,16 @@ services:
         condition: service_healthy
     secrets:
       - eegfaktura-keycloak-json
+      - eegfaktura-db-password
+      - eegfaktura-keycloak-admincli-secret
               
   eegfaktura-admin-web:
     image: ghcr.io/eegfaktura/eeg-registration-frontend:latest
     hostname: eegfaktura-admin-web
-    volumes:
-      - ./keycloak/keycloak-web.json:/var/www/html/registration-web/config/keycloak-config.json 
+    environment:
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_URL: "http://localhost:9180"
+      KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.admin"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -248,11 +257,18 @@ services:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
       JDBC_DATABASE_USERNAME: "eegfaktura"
       JDBC_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      MAIL_HOST: "mail.host.com"
+      MAIL_PORT: 1111
+      MAIL_USER: "mailUser"
+      MAIL_PASSWORT: "mailPassword"
+      JWT_PUBLICKEYFILE: "/run/secrets/eegfaktura-jwt-public-key"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
       eegfaktura-postfix:
         condition: service_started
+    secrets:
+      - eegfaktura-jwt-public-key    
       
 volumes:
     eegfaktura_postgres_data:
@@ -280,3 +296,5 @@ secrets:
       file: ./eegfaktura-keycloak-db-password.txt
   eegfaktura-keycloak-json:
       file: ./keycloak/keycloak.json
+  eegfaktura-keycloak-admincli-secret:
+      file: ./eegfaktura-admin-cli-secret.txt     

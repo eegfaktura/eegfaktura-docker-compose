@@ -1,25 +1,27 @@
 {
   "app" : {
     "realm": "EEGFaktura",
-    "auth-server-url": "http://eegfaktura-keycloak:8080",
+    "auth-server-url": "http://localhost:9180",
     "ssl-required": "external",
     "resource": "at.ourproject.vfeeg.app",
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
     "confidential-port": 0,
-    "issuer_url": "http://localhost:9180/realms/EEGFaktura"
+    "issuer-internal": true,
+    "issuer-url": "eegfaktura-keycloak:8080"
   },
   "api" : {
     "realm": "EEGFaktura",
-    "auth-server-url": "http://eegfaktura-keycloak:8080",
+    "auth-server-url": "http://localhost:9180",
     "ssl-required": "external",
     "resource": "at.ourproject.vfeeg.api",
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
     "confidential-port": 0,
-    "issuer_url": "http://localhost:9180/realms/EEGFaktura"
+    "issuer-internal": true,
+    "issuer-url": "eegfaktura-keycloak:8080"
   },
   "admin": {
     "realm": "EEGFaktura",
@@ -30,16 +32,5 @@
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
     "confidential-port": 0
-  },
-  "admin-cli": {
-    "realm": "EEGFaktura",
-    "auth-server-url": "http://eegfaktura-keycloak:8080",
-    "ssl-required": "external",
-    "resource": "admin-cli",
-    "public-client": true,
-    "verify-token-audience": true,
-    "use-resource-role-mappings": true,
-    "confidential-port": 0,
-    "secret": "MigvAW6zbMAFsitXXBBFjzWkBsBz4j8i"
   }    
 }
