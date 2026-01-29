@@ -13,15 +13,14 @@
   },
   "api" : {
     "realm": "EEGFaktura",
-    "auth-server-url": "http://localhost:9180",
+    "auth-server-url": "http://eegfaktura-keycloak:8080",
     "ssl-required": "external",
     "resource": "at.ourproject.vfeeg.api",
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
     "confidential-port": 0,
-    "issuer-internal": true,
-    "issuer-url": "eegfaktura-keycloak:8080"
+    "issuer-url": "http://localhost:9180/realms/EEGFaktura"
   },
   "admin": {
     "realm": "EEGFaktura",
