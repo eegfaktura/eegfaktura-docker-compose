@@ -39,10 +39,7 @@ docker compose up
 
 ![image](https://github.com/user-attachments/assets/dc7f870d-6790-4787-9d2e-833aca2ba6d4)
 
-Copy the new generated key to the file **keycloak/keycloak.json**
-Section 'admin-cli' -> secret
-
-![image](https://github.com/user-attachments/assets/556edffd-a5ea-4f07-ac35-30873b96e4aa)
+Copy the new generated key to the file **eegfaktura-admin-cli-secret.txt**
 
 
 5. Restart docker compose
