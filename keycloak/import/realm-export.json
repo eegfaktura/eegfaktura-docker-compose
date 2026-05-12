@@ -774,7 +774,7 @@
       "id": "cac11bcf-7ea7-4467-82cf-7379b0265611",
       "clientId": "at.ourproject.vfeeg.admin",
       "name": "",
-      "description": "",
+      "description": "Admin-Frontend (vfeeg-registration). Scala/Akka-Backend (eeg-registration-backend) erwartet aud=at.ourproject.vfeeg.admin im Token — daher `admin-audience` protocolMapper (siehe unten).",
       "rootUrl": "http://localhost:9091",
       "adminUrl": "http://localhost:8002",
       "baseUrl": "http://localhost:8080",
@@ -832,6 +832,19 @@
             "claim.name": "client_id",
             "jsonType.label": "String",
             "access.tokenResponse.claim": "false"
+          }
+        },
+        {
+          "name": "admin-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "at.ourproject.vfeeg.admin",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "false"
           }
         }
       ],
