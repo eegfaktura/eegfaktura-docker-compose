@@ -157,10 +157,14 @@ services:
       KC_HOSTNAME_DEBUG: true
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
-      KEYCLOAK_FRONTEND_URL: "http://eegfaktura-keycloak:9180"
+      # Unified Hostname: Keycloak ist unter EINEM Namen erreichbar, der von
+      # Browser UND Containern identisch aufloest -> Token-iss == intern erreichbare
+      # JWKS-URL. Browser-seitig dafuer "127.0.0.1 eegfaktura-keycloak" in die
+      # hosts-Datei eintragen (Produktion: echte DNS-Domain statt hosts-Eintrag).
+      KEYCLOAK_FRONTEND_URL: "http://eegfaktura-keycloak:8080"
       KC_HTTP_MANAGEMENT_PORT: "9181"
-    ports: 
-      - "9180:8080"
+    ports:
+      - "8080:8080"
       - "9181:9181"
     healthcheck:
       test: [
@@ -183,11 +187,17 @@ services:
         condition: service_healthy
         
   eegfaktura-admin-backend:
-    image: ghcr.io/eegfaktura/eeg-registration-backend:latest
+    image: ghcr.io/eegfaktura/eeg-registration-backend:v0.2.13
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
       KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycloak-json"
+      # Token-Validierung (JWKS-Abruf + Issuer-Pruefung) laeuft ueber EINE URL.
+      # Diese muss der Unified-Hostname sein, der vom Browser (Token-iss) UND aus
+      # den Containern (JWKS) identisch erreichbar ist -> siehe eegfaktura-keycloak.
+      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_AUDIENCE: "at.ourproject.vfeeg.admin"
       DATABASE_USER: "eegfaktura"
       DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
       DATABASE_DBNAME: "eegfaktura"

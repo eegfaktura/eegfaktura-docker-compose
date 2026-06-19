@@ -13,6 +13,18 @@ Make sure you have the following installed:
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Docker Compose](https://docs.docker.com/compose/)
 
+**Hosts entry (required).** Keycloak is reachable under a single hostname that must
+resolve identically for your browser and for the containers, so that the token
+issuer (`iss`) matches the URL the backends use to fetch the signing keys (JWKS).
+Add this line to your hosts file:
+
+```
+127.0.0.1 eegfaktura-keycloak
+```
+
+- Linux/macOS: `/etc/hosts`  ·  Windows: `C:\Windows\System32\drivers\etc\hosts`
+- In production use a real DNS name for Keycloak instead of this hosts entry.
+
 ### Installation
 
 1. Clone the repository:
@@ -29,7 +41,7 @@ docker compose up
 
 3. Create Manager User
    
-- Open Keycloak http://localhost:9180 and login as admin. Passwort: SuperSecretPassword
+- Open Keycloak http://eegfaktura-keycloak:8080 and login as admin. Passwort: SuperSecretPassword
 - Create a new user in the EEGFaktura Realm
 - Assign role **Manager** to the User
 
