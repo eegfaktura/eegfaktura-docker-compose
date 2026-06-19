@@ -1,5 +1,5 @@
 {
-  "app" : {
+  "app": {
     "realm": "EEGFaktura",
     "auth-server-url": "http://eegfaktura-keycloak:8080",
     "ssl-required": "external",
@@ -7,10 +7,9 @@
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
-    "confidential-port": 0,
-    "issuer_url": "http://localhost:9180/realms/EEGFaktura"
+    "confidential-port": 0
   },
-  "api" : {
+  "api": {
     "realm": "EEGFaktura",
     "auth-server-url": "http://eegfaktura-keycloak:8080",
     "ssl-required": "external",
@@ -18,8 +17,7 @@
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
-    "confidential-port": 0,
-    "issuer_url": "http://localhost:9180/realms/EEGFaktura"
+    "confidential-port": 0
   },
   "admin": {
     "realm": "EEGFaktura",
@@ -29,8 +27,7 @@
     "public-client": true,
     "verify-token-audience": true,
     "use-resource-role-mappings": true,
-    "confidential-port": 0,
-    "issuer_url": "http://localhost:9180/realms/EEGFaktura"
+    "confidential-port": 0
   },
   "admin-cli": {
     "realm": "EEGFaktura",
@@ -42,5 +39,5 @@
     "use-resource-role-mappings": true,
     "confidential-port": 0,
     "secret": "MigvAW6zbMAFsitXXBBFjzWkBsBz4j8i"
-  }    
+  }
 }

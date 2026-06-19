@@ -2531,7 +2531,7 @@
     "oauth2DeviceCodeLifespan": "600",
     "parRequestUriLifespan": "60",
     "clientSessionMaxLifespan": "0",
-    "frontendUrl": "http://localhost:9180",
+    "frontendUrl": "http://eegfaktura-keycloak:8080",
     "acr.loa.map": "{}"
   },
   "keycloakVersion": "22.0.5",
