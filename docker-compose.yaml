@@ -232,9 +232,15 @@ services:
       HTTP_PORT: 8080
       HTTP_FILE_DL_ENDPOINT: "filestore"
       FILESTORE_LOCAL_BASE_DIR: "/eegfaktura-filestore-data"
-      FILESTORE_CREATE_UNKNOWN_CATEGORY: true
-      FILESTORE_CREATE_UNKNOWN_CONTAINER: true
-      FILESTORE_CREATE_UNKNOWN_STORAGE: true
+      # Werte als String quoten: aeltere docker-compose-Versionen (z.B. v1.29.2 auf
+      # Debian 12) lehnen unquoted Booleans als Env-Wert ab ("invalid type").
+      # ACHTUNG: aktiviert Auto-Anlage von Category/Container/Storage — fuer den
+      # First-Run-Komfort dieses Stacks gewollt, aber in Produktion abzuschalten.
+      # Deaktivieren NICHT ueber "false" (der filestore wertet jeden nicht-leeren
+      # String als true), sondern ueber einen leeren Wert ("").
+      FILESTORE_CREATE_UNKNOWN_CATEGORY: "true"
+      FILESTORE_CREATE_UNKNOWN_CONTAINER: "true"
+      FILESTORE_CREATE_UNKNOWN_STORAGE: "true"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
