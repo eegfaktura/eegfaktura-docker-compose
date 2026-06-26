@@ -2,6 +2,30 @@
 
 **EEGFaktura** is a platform designed for efficient invoice and billing management. This repository provides everything you need to set up and run the platform locally using Docker Compose.
 
+## What's in the stack
+
+This repository orchestrates the full **eegfaktura** suite — an open-source billing
+and management platform for Austrian renewable energy communities (EEG) — via a
+single `docker-compose.yaml`:
+
+| Service | Role | Tech |
+|---|---|---|
+| `eegfaktura-keycloak` | Authentication / OIDC issuer | Keycloak |
+| `eegfaktura-postgresql` | Database (app + Keycloak) | PostgreSQL |
+| `eegfaktura-mosquitto` | MQTT message broker | Eclipse Mosquitto |
+| `eegfaktura-backend` | Core domain & billing API | Go (REST/GraphQL/gRPC) |
+| `eegfaktura-web` | Customer web UI | React / Ionic |
+| `eegfaktura-admin-backend` / `-web` | EEG registration & admin | Scala/Pekko · React |
+| `eegfaktura-energystore` | Energy time-series store | Go · BadgerDB |
+| `eegfaktura-filestore` | Document storage | Python / FastAPI |
+| `eegfaktura-eda` | EDA market communication | Scala/Pekko (Ponton/KEP + email) |
+| `eegfaktura-billing` | Invoice / credit-note generation | Java / Spring Boot |
+| `eegfaktura-postfix` | Outbound mail relay | Postfix |
+| `eegfaktura-proxy` | Reverse proxy | Caddy |
+
+The reverse proxy publishes the main app on **http://localhost:8001** and the admin
+portal on **http://localhost:8002**; Keycloak is on **http://eegfaktura-keycloak:8080**.
+
 ## ⚙️ Quick Start
 
 Easily run EEGFaktura on your personal computer with a few simple steps.
