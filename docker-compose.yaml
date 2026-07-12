@@ -77,8 +77,15 @@ services:
   eegfaktura-web:
     image: ghcr.io/eegfaktura/vfeeg-web:latest
     hostname: eegfaktura-web
-    volumes:
-      - ./keycloak/keycloak-web.json:/var/www/html/vfeeg-web/config/keycloak-config.json
+    environment:
+      # Das Image rendert /config/keycloak-config.json aus einem Caddy-Template mit diesen
+      # Env-Werten (ohne sie faellt es auf http://localhost:7080 zurueck -> #25). Ein Mount
+      # unter den Webroot greift NICHT, da Caddy /config/... aus /srv serviert.
+      # KEYCLOAK_URL = Unified-Hostname, der aus Browser UND Containern identisch aufloest
+      # (Browser: "127.0.0.1 eegfaktura-keycloak" in die hosts-Datei) -> Token-iss == JWKS-URL.
+      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.app"
     depends_on:
       - eegfaktura-backend
       - eegfaktura-energystore
@@ -218,8 +225,14 @@ services:
   eegfaktura-admin-web:
     image: ghcr.io/eegfaktura/eeg-registration-frontend:latest
     hostname: eegfaktura-admin-web
-    volumes:
-      - ./keycloak/keycloak-web.json:/var/www/html/registration-web/config/keycloak-config.json 
+    environment:
+      # Wie eegfaktura-web: die Keycloak-URL kommt aus dem Env-Template des Images
+      # (ohne sie -> http://localhost:7080, genau der Fehler aus #25). Ein Mount unter
+      # den Webroot greift NICHT (Caddy serviert /config/... aus /srv). Unified-Hostname,
+      # Browser braucht den hosts-Eintrag "127.0.0.1 eegfaktura-keycloak".
+      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_REALM: "EEGFaktura"
+      KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.admin"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
