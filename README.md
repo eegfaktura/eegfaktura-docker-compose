@@ -28,9 +28,11 @@ portal on **http://localhost:8002**; Keycloak is on **http://eegfaktura-keycloak
 
 ### Image versions
 
-The service images are **pinned to released versions** (`vX.Y.Z`) rather than `latest`,
-so that a checkout of this repository always describes one reproducible, tested
-combination of services. They come from the public release tier
+The application images are **pinned to released versions** (`vX.Y.Z`) rather than
+`latest`, so that a checkout of this repository always describes one reproducible,
+tested combination of services. (Two infrastructure images — `eegfaktura-mosquitto`
+and `eegfaktura-postfix` — still track `latest`; they change rarely and carry no
+wire format of their own.) They come from the public release tier
 `ghcr.io/eegfaktura/*`, which is fed by an explicit promotion step —
 see [ADR-0005](https://github.com/vfeeg-development/eegfaktura-platform/blob/main/docs/adr/0005-two-tier-image-registry.md).
 
@@ -80,35 +82,21 @@ cd eegfaktura-docker-compose
 docker compose up
 ```
 
-3. Create Manager User
-   
-- Open Keycloak http://eegfaktura-keycloak:8080 and login as admin. Passwort: SuperSecretPassword
-- Create a new user in the EEGFaktura Realm
-- Assign role **Manager** to the User
+3. Create a Manager User
+
+This user administers the **Admin Portal** (step 4). Pick username and password
+yourself — nothing else in the stack refers to them.
+
+- Open Keycloak http://eegfaktura-keycloak:8080 and log in as `admin`, password `SuperSecretPassword`
+- Create a new user in the **EEGFaktura** realm and set a (non-temporary) password
+- Assign the realm role **Manager** to that user
 
 ![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
 
-4. Re-create client 'admin-cli' Secret-Key
+4. Create an EEG
 
-![image](https://github.com/user-attachments/assets/dc7f870d-6790-4787-9d2e-833aca2ba6d4)
-
-Copy the new generated key to the file **keycloak/keycloak.json**
-Section 'admin-cli' -> secret
-
-![image](https://github.com/user-attachments/assets/556edffd-a5ea-4f07-ac35-30873b96e4aa)
-
-
-5. Restart docker compose
-```bash
-docker compose down
-docker compose up
-```
-
-6. Create a EEG
-   
-open the Admin Portal on http://localhost:8002
-
-Register a new EEG
+Open the Admin Portal on http://localhost:8002 and log in with the Manager user
+from step 3. Register a new EEG:
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
 
@@ -118,16 +106,20 @@ Gemeinschafts-ID: AT00999900000TC100200000000000002
 Netzbetreiber-ID: AT009999
 ```
 
-7. Open EEGFaktura
-   
-- Open the Platform on http://localhost:8001
-- Log in using the credentials provided during the creation process. (Step 6)
-- Upload Masterdata and Energiedata
+The registration form also asks for the EEG administrator's account. Those are the
+credentials you use in step 5.
+
+5. Open EEGFaktura
+
+- Open the platform on http://localhost:8001
+- Log in with the account you entered in step 4. **The password from step 4 is
+  temporary** — Keycloak asks you to set a new one on first login.
+- Upload master data and energy data. Both sample files ship in `data/`:
 
 ![image](https://github.com/user-attachments/assets/f39a41c7-155f-4910-b088-5390369a737a)
 
 ```
-Stammdaten: TE100200-Muster-Stammdatenimport.xlsx
-Energiedaten: TEST_EEG_Report_AT00999900000TE100100.xlsx
+Stammdaten: data/TE100200-Muster-Stammdatenimport.xlsx   (sheet "EEG Stammdaten")
+Energiedaten: data/TEST_EEG_Report_AT00999900000TE100100.xlsx   (sheet "Energiedaten")
 ```
 
