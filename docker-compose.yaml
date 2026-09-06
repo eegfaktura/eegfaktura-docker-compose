@@ -277,6 +277,16 @@ services:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
       JDBC_DATABASE_USERNAME: "eegfaktura"
       JDBC_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      # Pflicht: application.properties hat fuer diese vier KEINEN Default
+      # (spring.mail.host=${MAIL_HOST} usw.). Fehlen sie, scheitert der Start mit
+      # "Could not resolve placeholder 'MAIL_HOST'" -- der Dienst kam im Compose-Stack
+      # also nie hoch, obwohl depends_on auf postfix schon vorhanden war.
+      MAIL_HOST: "eegfaktura-postfix"
+      MAIL_PORT: "25"
+      MAIL_USER: " "
+      MAIL_PASSWORD: ""
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS_ENABLE: "false"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
