@@ -294,11 +294,20 @@ services:
       MAIL_PASSWORD: ""
       MAIL_SMTP_AUTH: "false"
       MAIL_SMTP_STARTTLS_ENABLE: "false"
+      # Ohne diese Variable greift der Default aus application.properties,
+      # /billing/zertifikat-pub.pem -- ein Pfad, den es im Image NICHT gibt (dort liegt
+      # nur /opt/app/eegfaktura-billing.jar). getRSAPublicKey() wirft dann, die Exception
+      # wird geschluckt und die Authentifizierung bleibt leer: JEDER /cash/*-Aufruf
+      # scheitert. Der Key wird pro Request gelesen, ein Neustart nach dem Austausch ist
+      # also nicht noetig.
+      JWT_PUBLICKEYFILE: "/run/secrets/eegfaktura-jwt-public-key"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
       eegfaktura-postfix:
         condition: service_started
+    secrets:
+      - eegfaktura-jwt-public-key
       
 volumes:
     eegfaktura_postgres_data:

@@ -82,9 +82,29 @@ cd eegfaktura-docker-compose
 docker compose up
 ```
 
-3. Create a Manager User
+3. Export the realm signing certificate for the billing service
 
-This user administers the **Admin Portal** (step 4). Pick username and password
+Keycloak generates a fresh RSA key pair on its **first** start, so the
+`jwt-public-key.pem` shipped in this repository never matches your installation.
+The billing service verifies tokens against that file — without this step every
+call to `/cash/*` fails authentication.
+
+Write the current certificate into the file (in place, so the container's mount
+stays valid — no restart needed, billing re-reads the file per request):
+
+```bash
+curl -s http://eegfaktura-keycloak:8080/realms/EEGFaktura/protocol/openid-connect/certs \
+  | python3 -c "import sys,json,textwrap; k=next(k for k in json.load(sys.stdin)['keys'] if k.get('alg')=='RS256' and k.get('use')=='sig'); print('-----BEGIN CERTIFICATE-----'); print('\n'.join(textwrap.wrap(k['x5c'][0],64))); print('-----END CERTIFICATE-----')" \
+  > jwt-public-key.pem
+```
+
+Alternatively, copy it from the Keycloak admin console under
+*Realm Settings → Keys → RS256 → Certificate* and wrap it in
+`-----BEGIN CERTIFICATE-----` / `-----END CERTIFICATE-----` lines.
+
+4. Create a Manager User
+
+This user administers the **Admin Portal** (step 5). Pick username and password
 yourself — nothing else in the stack refers to them.
 
 - Open Keycloak http://eegfaktura-keycloak:8080 and log in as `admin`, password `SuperSecretPassword`
@@ -93,10 +113,10 @@ yourself — nothing else in the stack refers to them.
 
 ![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
 
-4. Create an EEG
+5. Create an EEG
 
 Open the Admin Portal on http://localhost:8002 and log in with the Manager user
-from step 3. Register a new EEG:
+from step 4. Register a new EEG:
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
 
@@ -107,12 +127,12 @@ Netzbetreiber-ID: AT009999
 ```
 
 The registration form also asks for the EEG administrator's account. Those are the
-credentials you use in step 5.
+credentials you use in step 6.
 
-5. Open EEGFaktura
+6. Open EEGFaktura
 
 - Open the platform on http://localhost:8001
-- Log in with the account you entered in step 4. **The password from step 4 is
+- Log in with the account you entered in step 5. **The password from step 5 is
   temporary** — Keycloak asks you to set a new one on first login.
 - Upload master data and energy data. Both sample files ship in `data/`:
 
