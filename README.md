@@ -26,6 +26,23 @@ single `docker-compose.yaml`:
 The reverse proxy publishes the main app on **http://localhost:8001** and the admin
 portal on **http://localhost:8002**; Keycloak is on **http://eegfaktura-keycloak:8080**.
 
+### Image versions
+
+The service images are **pinned to released versions** (`vX.Y.Z`) rather than `latest`,
+so that a checkout of this repository always describes one reproducible, tested
+combination of services. They come from the public release tier
+`ghcr.io/eegfaktura/*`, which is fed by an explicit promotion step —
+see [ADR-0005](https://github.com/vfeeg-development/eegfaktura-platform/blob/main/docs/adr/0005-two-tier-image-registry.md).
+
+This matters more than it looks: the services talk to each other over wire formats
+that change (MQTT payload encoding, EDA message versions). A stack mixing an old
+image with a new one can start up cleanly and still not work — for example, energy
+data simply never arrives, with no error anywhere. Pinning keeps the combination
+one we have actually run together.
+
+If you want to run a service you built yourself, override just that one in
+`docker-compose.override.yml` instead of editing the pinned versions.
+
 ## ⚙️ Quick Start
 
 Easily run EEGFaktura on your personal computer with a few simple steps.
