@@ -132,7 +132,7 @@ services:
         condition: service_healthy
 
   eegfaktura-proxy:
-    image: caddy
+    image: caddy:2.11.4
     ports: 
       - "8001:80"
       - "8002:81"      
@@ -199,6 +199,13 @@ services:
     command: /opt/docker/bin/eegfaktura-registration
     environment:
       KEYCLOAK_CONFIG_JSON: "/run/secrets/eegfaktura-keycloak-json"
+      # Das admin-cli-Secret liest der Dienst AUSSCHLIESSLICH aus dieser Variablen
+      # (application.conf: keycloak.secret = ${?KEYCLOAK_ADMIN_CLI_SECRET}); die
+      # gemountete keycloak.json wird dafuer NICHT ausgewertet. Ohne die Variable
+      # faellt er auf ein im Image eingebackenes Secret zurueck -> Keycloak
+      # antwortet 401 und die EEG-Anlage schlaegt fehl. Der Wert muss mit
+      # keycloak/import/realm-export.json (Client admin-cli) uebereinstimmen.
+      KEYCLOAK_ADMIN_CLI_SECRET: "LOCALDEVONLYadminCliSecret123456"
       # Token-Validierung (JWKS-Abruf + Issuer-Pruefung) laeuft ueber EINE URL.
       # Diese muss der Unified-Hostname sein, der vom Browser (Token-iss) UND aus
       # den Containern (JWKS) identisch erreichbar ist -> siehe eegfaktura-keycloak.

@@ -684,7 +684,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "**********",
+      "secret": "LOCALDEVONLYadminCliSecret123456",
       "redirectUris": [],
       "webOrigins": [],
       "notBefore": 0,
@@ -926,6 +926,19 @@
             "access.token.claim": "true",
             "claim.name": "tenant",
             "jsonType.label": "JSON"
+          }
+        },
+        {
+          "name": "accessGroupsMapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "access_groups",
+            "full.path": "true"
           }
         }
       ],
