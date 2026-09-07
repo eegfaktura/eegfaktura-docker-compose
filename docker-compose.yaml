@@ -147,7 +147,7 @@ services:
       - eegfaktura-keycloak
 
   eegfaktura-keycloak:
-    image: ghcr.io/eegfaktura/eegfaktura-keycloak:v1.0.1
+    image: ghcr.io/eegfaktura/eegfaktura-keycloak:v1.0.2
     hostname: eegfaktura-keycloak
     command: start --optimized --import-realm
     volumes:
