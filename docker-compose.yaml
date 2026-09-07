@@ -118,7 +118,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-eda:
-    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.0.2
+    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.0.3
     hostname: eegfaktura-eda
     volumes:
       - eegfaktura_eda_data:/storage/prod 
