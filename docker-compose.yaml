@@ -278,7 +278,7 @@ services:
       - eegfaktura-db-password
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.2
+    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.3
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
