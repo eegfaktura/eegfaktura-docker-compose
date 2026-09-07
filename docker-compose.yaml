@@ -93,7 +93,7 @@ services:
       - eegfaktura-filestore   
       
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/vfeeg-backend:v1.0.7
+    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.0
     hostname: eegfaktura-backend
     volumes:
       - eegfaktura_backend_data:/opt/storage
