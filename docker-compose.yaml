@@ -230,7 +230,7 @@ services:
       - eegfaktura-keycloak-json
               
   eegfaktura-admin-web:
-    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.0
+    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.1
     hostname: eegfaktura-admin-web
     environment:
       # Wie eegfaktura-web: die Keycloak-URL kommt aus dem Env-Template des Images
