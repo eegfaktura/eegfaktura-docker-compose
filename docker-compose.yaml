@@ -57,7 +57,7 @@ services:
       - eegfaktura-smtp-password
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.2.0
     hostname: eegfaktura-energystore
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
@@ -75,7 +75,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-web:
-    image: ghcr.io/eegfaktura/vfeeg-web:v1.0.11
+    image: ghcr.io/eegfaktura/vfeeg-web:v1.0.12
     hostname: eegfaktura-web
     environment:
       # Das Image rendert /config/keycloak-config.json aus einem Caddy-Template mit diesen
@@ -93,7 +93,7 @@ services:
       - eegfaktura-filestore   
       
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/vfeeg-backend:v1.0.7
+    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.0
     hostname: eegfaktura-backend
     volumes:
       - eegfaktura_backend_data:/opt/storage
@@ -118,7 +118,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-eda:
-    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.0.2
+    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.0.3
     hostname: eegfaktura-eda
     volumes:
       - eegfaktura_eda_data:/storage/prod 
@@ -194,7 +194,7 @@ services:
         condition: service_healthy
         
   eegfaktura-admin-backend:
-    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.0.1
+    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.0.2
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
@@ -230,7 +230,7 @@ services:
       - eegfaktura-keycloak-json
               
   eegfaktura-admin-web:
-    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.0
+    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.1
     hostname: eegfaktura-admin-web
     environment:
       # Wie eegfaktura-web: die Keycloak-URL kommt aus dem Env-Template des Images
@@ -249,7 +249,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.2
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.3
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -278,7 +278,7 @@ services:
       - eegfaktura-db-password
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.2
+    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.3
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
