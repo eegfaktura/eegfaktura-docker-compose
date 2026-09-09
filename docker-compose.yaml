@@ -57,7 +57,7 @@ services:
       - eegfaktura-smtp-password
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.2.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.2.1
     hostname: eegfaktura-energystore
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
