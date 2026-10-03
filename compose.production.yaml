@@ -1,0 +1,93 @@
+# Requires Docker Compose >= 2.24.4. Combine with docker-compose.yaml.
+services:
+  eegfaktura-postgresql:
+    restart: unless-stopped
+    ports: !reset []
+  eegfaktura-keycloak:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      KEYCLOAK_ADMIN: ""
+      KEYCLOAK_ADMIN_PASSWORD: ""
+      KEYCLOAK_FRONTEND_URL: ""
+      KC_BOOTSTRAP_ADMIN_USERNAME: "${KEYCLOAK_ADMIN_USER:-admin}"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD:?Run setup.py first}"
+      KC_DB_PASSWORD: "${KEYCLOAK_DB_PASSWORD:?Run setup.py first}"
+      KC_HOSTNAME_URL: ""
+      KC_HOSTNAME_PATH: ""
+      KC_HOSTNAME_STRICT_HTTPS: ""
+      KC_HOSTNAME_STRICT_BACKCHANNEL: ""
+      KC_PROXY: ""
+      PROXY_ADDRESS_FORWARDING: ""
+      KC_HOSTNAME: "${KEYCLOAK_URL:?KEYCLOAK_URL required}"
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME_DEBUG: "false"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "false"
+      KC_PROXY_HEADERS: "xforwarded"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_MANAGEMENT_SCHEME: "http"
+      KC_HTTPS_PORT: "443"
+      KC_HTTPS_CERTIFICATE_FILE: "/opt/keycloak/conf/tls.crt"
+      KC_HTTPS_CERTIFICATE_KEY_FILE: "/opt/keycloak/conf/tls.key"
+    volumes:
+      - "${TLS_CERT_FILE:?TLS_CERT_FILE required}:/opt/keycloak/conf/tls.crt:ro"
+      - "${TLS_KEY_FILE:?TLS_KEY_FILE required}:/opt/keycloak/conf/tls.key:ro"
+  eegfaktura-proxy:
+    restart: unless-stopped
+    ports: !override
+      - "${PROXY_BIND_IP:-127.0.0.1}:${HTTP_PORT:-80}:80"
+      - "${PROXY_BIND_IP:-127.0.0.1}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - "${TLS_CERT_FILE:?TLS_CERT_FILE required}:/certs/fullchain.pem:ro"
+      - "${TLS_KEY_FILE:?TLS_KEY_FILE required}:/certs/privkey.pem:ro"
+    depends_on: !override
+      eegfaktura-keycloak:
+        condition: service_healthy
+    environment:
+      WEB_HOST: "${WEB_HOST:?WEB_HOST required}"
+      ADMIN_HOST: "${ADMIN_HOST:?ADMIN_HOST required}"
+      AUTH_HOST: "${AUTH_HOST:?AUTH_HOST required}"
+  eegfaktura-billing:
+    restart: unless-stopped
+    environment:
+      JDBC_DATABASE_PASSWORD: "${DATABASE_PASSWORD:?Run setup.py first}"
+      MAIL_NO_REPLY_TO: "${SMTP_EMAIL:?SMTP_EMAIL required}"
+  eegfaktura-mosquitto:
+    restart: unless-stopped
+  eegfaktura-postfix:
+    restart: unless-stopped
+  eegfaktura-energystore:
+    restart: unless-stopped
+  eegfaktura-web:
+    restart: unless-stopped
+  eegfaktura-backend:
+    restart: unless-stopped
+    environment:
+      VFEEG_BACKEND_DATABASE_PASSWORD: "${DATABASE_PASSWORD:?Run setup.py first}"
+  eegfaktura-eda:
+    restart: unless-stopped
+    environment:
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD:?Run setup.py first}"
+  eegfaktura-admin-backend:
+    restart: unless-stopped
+    environment:
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD:?Run setup.py first}"
+      KEYCLOAK_ADMIN_CLI_SECRET: "${KEYCLOAK_ADMIN_CLI_SECRET:?Run setup.py first}"
+  eegfaktura-admin-web:
+    restart: unless-stopped
+  eegfaktura-filestore:
+    restart: unless-stopped
+
+secrets:
+  eegfaktura-postgres-password:
+    file: "${POSTGRES_PASSWORD_FILE:?Run setup.py first}"
+  eegfaktura-db-password:
+    file: "${DATABASE_PASSWORD_FILE:?Run setup.py first}"
+  eegfaktura-keycloak-db-password:
+    file: "${KEYCLOAK_DB_PASSWORD_FILE:?Run setup.py first}"
+  eegfaktura-keycloak-json:
+    file: "${KEYCLOAK_CONFIG_FILE:?Run setup.py first}"
+  eegfaktura-smtp-password:
+    file: "${SMTP_PASSWORD_FILE:?Run setup.py first}"
+  eegfaktura-jwt-public-key:
+    file: "${JWT_PUBLIC_KEY_FILE:?Run setup.py first}"

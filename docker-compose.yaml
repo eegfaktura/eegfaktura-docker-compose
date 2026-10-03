@@ -15,11 +15,11 @@ services:
       KEYCLOAK_DB_DATABASE: "keycloak"
       POSTGRES_INITDB_ARGS: "--locale=de_DE:UTF8"
     ports:
-      - "26432:5432"  
+      - "${DEV_BIND_IP:-127.0.0.1}:${POSTGRES_PORT:-26432}:5432"
     volumes:
       - eegfaktura_postgres_data:/var/lib/postgresql/data/
     healthcheck:
-      test: "PGPASSWORD=$${DB_PASSWORD} pg_isready -d $${DB_DATABASE} -U $${DB_USERNAME} && psql --d $${DB_DATABASE} -U $${DB_USERNAME} --list"
+      test: "pg_isready -h 127.0.0.1 -d $${DB_DATABASE} -U $${DB_USERNAME}"
       timeout: 10s
       start_period: 10s
       interval: 10s
@@ -42,14 +42,14 @@ services:
     image: ghcr.io/eegfaktura/eegfaktura-postfix:latest
     hostname: eegfaktura-postfix
     environment:
-      POSTFIX_RELAY_HOST: "smtp.yourdomain.com"
-      POSTFIX_RELAY_PORT: "587"
-      POSTFIX_RELAY_TLS: "yes"
-      POSTFIX_RELAY_USER: "yoruser@yourdomain.com"
+      POSTFIX_RELAY_HOST: "${SMTP_HOST:-smtp.yourdomain.com}"
+      POSTFIX_RELAY_PORT: "${SMTP_PORT:-587}"
+      POSTFIX_RELAY_TLS: "${SMTP_TLS:-yes}"
+      POSTFIX_RELAY_USER: "${SMTP_USER:-yoruser@yourdomain.com}"
       POSTFIX_RELAY_PASSWORD_FILE: "/run/secrets/eegfaktura-smtp-password"
-      POSTFIX_RELAY_EMAIL: "eegfaktura@yourdomain.com"
+      POSTFIX_RELAY_EMAIL: "${SMTP_EMAIL:-eegfaktura@yourdomain.com}"
       POSTFIX_HOSTNAME: "eegfaktura-postfix"
-      POSTFIX_MYDOMAIN: "yourdomain.com"
+      POSTFIX_MYDOMAIN: "${SMTP_DOMAIN:-yourdomain.com}"
       POSTFIX_MYNETWORK: ""
       POSTFIX_DNS_1: "9.9.9.9"
       POSTFIX_DNS_2: "1.1.1.1"
@@ -83,13 +83,17 @@ services:
 
   eegfaktura-energystore:
     image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.5.0
+    entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
+    command: ["energystore", "-configPath", "/etc/energystore/", "-logtostderr=true", "-stderrthreshold=INFO"]
     hostname: eegfaktura-energystore
     environment:
+      WAIT_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}/realms/EEGFaktura/.well-known/openid-configuration"
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
       ENERGYSTORE_SERVICES_master-server: "eegfaktura-backend:9092"
       ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
     volumes:
+      - ./entrypoints/url-poller.sh:/opt/eegfaktura-entrypoint/url-poller.sh:ro
       - eegfaktura_energystore_data:/opt/rawdata
     depends_on:
       eegfaktura-volume-permissions:
@@ -110,7 +114,7 @@ services:
       # unter den Webroot greift NICHT, da Caddy /config/... aus /srv serviert.
       # KEYCLOAK_URL = Unified-Hostname, der aus Browser UND Containern identisch aufloest
       # (Browser: "127.0.0.1 eegfaktura-keycloak" in die hosts-Datei) -> Token-iss == JWKS-URL.
-      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}"
       KEYCLOAK_REALM: "EEGFaktura"
       KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.app"
     depends_on:
@@ -121,15 +125,20 @@ services:
       
   eegfaktura-backend:
     image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.1
+    entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
+    command: ["vfeeg-backend", "-configPath", "/etc/backend/"]
     hostname: eegfaktura-backend
     volumes:
+      - ./entrypoints/url-poller.sh:/opt/eegfaktura-entrypoint/url-poller.sh:ro
       - eegfaktura_backend_data:/opt/storage
       - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
       - ./templates:/opt/storage/public/templates
     environment:
+      WAIT_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}/realms/EEGFaktura/.well-known/openid-configuration"
+      WRAPPED_ENTRYPOINT: "/usr/local/bin/entrypoint.sh"
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
-      VFEEG_BACKEND_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      VFEEG_BACKEND_DATABASE_PASSWORD: "${DATABASE_PASSWORD:-Dzy5lShLn1N3rqTM}"
       VFEEG_BACKEND_DATABASE_DBNAME: "eegfaktura"
       VFEEG_BACKEND_DATABASE_HOST: "eegfaktura-postgresql"
       VFEEG_BACKEND_DATABASE_PORT: "5432"
@@ -163,10 +172,10 @@ services:
   eegfaktura-proxy:
     image: caddy:2.11.4
     ports: 
-      - "8001:80"
-      - "8002:81"      
+      - "${DEV_BIND_IP:-127.0.0.1}:${WEB_PORT:-8001}:80"
+      - "${DEV_BIND_IP:-127.0.0.1}:${ADMIN_PORT:-8002}:81"
     volumes: 
-      - ./caddy/caddy.conf:/etc/caddy/Caddyfile
+      - ${CADDY_CONFIG_FILE:-./caddy/caddy.conf}:/etc/caddy/Caddyfile:ro
     depends_on:
       - eegfaktura-web
       - eegfaktura-backend
@@ -180,10 +189,10 @@ services:
     hostname: eegfaktura-keycloak
     command: start --optimized --import-realm
     volumes:
-      - ./keycloak/import:/opt/keycloak/data/import
+      - ${KEYCLOAK_IMPORT_DIR:-./keycloak/import}:/opt/keycloak/data/import:ro
     environment:
       KC_DB_USERNAME: "keycloak"
-      KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
+      KC_DB_PASSWORD: "${KEYCLOAK_DB_PASSWORD:-Rs7naJnwoM4cz5Ws}"
       KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
@@ -192,21 +201,21 @@ services:
       KC_PROXY: edge
       KC_HOSTNAME_DEBUG: "true"
       KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
+      KEYCLOAK_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD:-SuperSecretPassword}"
       # Unified Hostname: Keycloak ist unter EINEM Namen erreichbar, der von
       # Browser UND Containern identisch aufloest -> Token-iss == intern erreichbare
       # JWKS-URL. Browser-seitig dafuer "127.0.0.1 eegfaktura-keycloak" in die
       # hosts-Datei eintragen (Produktion: echte DNS-Domain statt hosts-Eintrag).
-      KEYCLOAK_FRONTEND_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_FRONTEND_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}"
       KC_HTTP_MANAGEMENT_PORT: "9181"
     ports:
-      - "8080:8080"
-      - "9181:9181"
+      - "${DEV_BIND_IP:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080"
+      - "${DEV_BIND_IP:-127.0.0.1}:${KEYCLOAK_MANAGEMENT_PORT:-9181}:9181"
     healthcheck:
       test: [
         "CMD-SHELL",
-        "exec 3<>/dev/tcp/localhost/8080; \
-        echo -en 'GET /health/ready' >&3; \
+        "exec 3<>/dev/tcp/localhost/9181; \
+        printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3; \
         # Give the server a moment to respond, then search for 'UP'
         if timeout 3 cat <&3 | grep -m 1 'UP'; then \
           exec 3<&-; exec 3>&-; exit 0; \
@@ -234,20 +243,20 @@ services:
       # faellt er auf ein im Image eingebackenes Secret zurueck -> Keycloak
       # antwortet 401 und die EEG-Anlage schlaegt fehl. Der Wert muss mit
       # keycloak/import/realm-export.json (Client admin-cli) uebereinstimmen.
-      KEYCLOAK_ADMIN_CLI_SECRET: "LOCALDEVONLYadminCliSecret123456"
+      KEYCLOAK_ADMIN_CLI_SECRET: "${KEYCLOAK_ADMIN_CLI_SECRET:-LOCALDEVONLYadminCliSecret123456}"
       # Token-Validierung (JWKS-Abruf + Issuer-Pruefung) laeuft ueber EINE URL.
       # Diese muss der Unified-Hostname sein, der vom Browser (Token-iss) UND aus
       # den Containern (JWKS) identisch erreichbar ist -> siehe eegfaktura-keycloak.
-      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}"
       KEYCLOAK_REALM: "EEGFaktura"
       KEYCLOAK_AUDIENCE: "at.ourproject.vfeeg.admin"
       DATABASE_USER: "eegfaktura"
-      DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD:-Dzy5lShLn1N3rqTM}"
       DATABASE_DBNAME: "eegfaktura"
       DATABASE_HOST: "eegfaktura-postgresql"
       DATABASE_PORT: "5432"
       REGISTER_SERVICE_HOST_EEG: "eegfaktura-backend"
-      REGISTER_SERVICE_HOST_PONTON: "eegfaktura-kep"
+      REGISTER_SERVICE_HOST_PONTON: "eegfaktura-eda"
     depends_on:
       eegfaktura-postgresql:
         condition: service_healthy
@@ -266,7 +275,7 @@ services:
       # (ohne sie -> http://localhost:7080, genau der Fehler aus #25). Ein Mount unter
       # den Webroot greift NICHT (Caddy serviert /config/... aus /srv). Unified-Hostname,
       # Browser braucht den hosts-Eintrag "127.0.0.1 eegfaktura-keycloak".
-      KEYCLOAK_URL: "http://eegfaktura-keycloak:8080"
+      KEYCLOAK_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}"
       KEYCLOAK_REALM: "EEGFaktura"
       KEYCLOAK_CLIENT_ID: "at.ourproject.vfeeg.admin"
     depends_on:
@@ -290,6 +299,7 @@ services:
       HTTP_HOSTNAME: "0.0.0.0"
       HTTP_PORT: 8080
       HTTP_FILE_DL_ENDPOINT: "filestore"
+      JWT_PUBLIC_KEY_FILE: "/run/secrets/eegfaktura-jwt-public-key"
       FILESTORE_LOCAL_BASE_DIR: "/eegfaktura-filestore-data"
       # Werte als String quoten: aeltere docker-compose-Versionen (z.B. v1.29.2 auf
       # Debian 12) lehnen unquoted Booleans als Env-Wert ab ("invalid type").
@@ -307,6 +317,7 @@ services:
         condition: service_healthy
     secrets:
       - eegfaktura-db-password
+      - eegfaktura-jwt-public-key
 
   eegfaktura-billing:
     image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.4
@@ -314,7 +325,7 @@ services:
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
       JDBC_DATABASE_USERNAME: "eegfaktura"
-      JDBC_DATABASE_PASSWORD: "Dzy5lShLn1N3rqTM"
+      JDBC_DATABASE_PASSWORD: "${DATABASE_PASSWORD:-Dzy5lShLn1N3rqTM}"
       # Pflicht: application.properties hat fuer diese vier KEINEN Default
       # (spring.mail.host=${MAIL_HOST} usw.). Fehlen sie, scheitert der Start mit
       # "Could not resolve placeholder 'MAIL_HOST'" -- der Dienst kam im Compose-Stack
@@ -351,18 +362,18 @@ volumes:
 
 secrets:
   eegfaktura-postgres-password:
-    file: ./eegfaktura-postgres-password.txt
+    file: "${POSTGRES_PASSWORD_FILE:-./eegfaktura-postgres-password.txt}"
   eegfaktura-db-password:
-      file: ./eegfaktura-db-password.txt
+      file: "${DATABASE_PASSWORD_FILE:-./eegfaktura-db-password.txt}"
   eegfaktura-jwt-public-key:
-    file: ./jwt-public-key.pem
+    file: "${JWT_PUBLIC_KEY_FILE:-./jwt-public-key.pem}"
   eegfaktura-https-key:
     file: ./eegfaktura-proxy.key
   eegfaktura-https-cert:
     file: ./eegfaktura-proxy.crt
   eegfaktura-smtp-password:
-      file: ./eegfaktura-smtp-password.txt
+      file: "${SMTP_PASSWORD_FILE:-./eegfaktura-smtp-password.txt}"
   eegfaktura-keycloak-db-password:
-      file: ./eegfaktura-keycloak-db-password.txt
+      file: "${KEYCLOAK_DB_PASSWORD_FILE:-./eegfaktura-keycloak-db-password.txt}"
   eegfaktura-keycloak-json:
-      file: ./keycloak/keycloak.json
+      file: "${KEYCLOAK_CONFIG_FILE:-./keycloak/keycloak.json}"
