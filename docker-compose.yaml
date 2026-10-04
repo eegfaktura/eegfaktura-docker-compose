@@ -56,8 +56,33 @@ services:
     secrets:
       - eegfaktura-smtp-password
 
+  # Einmalige Hilfsaufgabe vor dem Start: backend, energystore und filestore laufen nicht als
+  # root, sondern als UID/GID 1000. Ein Docker-Volume gehoert aber root, wenn es von einem
+  # aelteren (Root-)Image angelegt wurde oder das Image das Verzeichnis nicht selbst anlegt
+  # (filestore, backend). Dann koennte der Dienst nicht schreiben. Die Aufgabe stellt die
+  # Volumes einmalig auf 1000:1000 um -- nur wenn die Wurzel noch nicht passt, damit nicht
+  # bei jedem Start Millionen Dateien angefasst werden. (In Kubernetes erledigt das fsGroup.)
+  eegfaktura-volume-permissions:
+    image: busybox:1.37
+    user: "0:0"
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        for d in /volumes/backend /volumes/energystore /volumes/filestore; do
+          if [ "$$(stat -c %u:%g "$$d")" != "1000:1000" ]; then
+            echo "$$d -> 1000:1000"
+            chown -R 1000:1000 "$$d"
+          fi
+        done
+    volumes:
+      - eegfaktura_backend_data:/volumes/backend
+      - eegfaktura_energystore_data:/volumes/energystore
+      - eegfaktura_filestore_data:/volumes/filestore
+
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.4.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.5.0
     hostname: eegfaktura-energystore
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
@@ -67,6 +92,8 @@ services:
     volumes:
       - eegfaktura_energystore_data:/opt/rawdata
     depends_on:
+      eegfaktura-volume-permissions:
+        condition: service_completed_successfully
       eegfaktura-mosquitto:
         condition: service_started
       eegfaktura-keycloak:
@@ -75,7 +102,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-web:
-    image: ghcr.io/eegfaktura/vfeeg-web:v1.0.12
+    image: ghcr.io/eegfaktura/vfeeg-web:v1.0.13
     hostname: eegfaktura-web
     environment:
       # Das Image rendert /config/keycloak-config.json aus einem Caddy-Template mit diesen
@@ -93,7 +120,7 @@ services:
       - eegfaktura-filestore   
       
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.0
+    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.1
     hostname: eegfaktura-backend
     volumes:
       - eegfaktura_backend_data:/opt/storage
@@ -108,6 +135,8 @@ services:
       VFEEG_BACKEND_DATABASE_PORT: "5432"
       VFEEG_BACKEND_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"     
     depends_on:
+      eegfaktura-volume-permissions:
+        condition: service_completed_successfully
       eegfaktura-postgresql:
         condition: service_healthy
       eegfaktura-mosquitto:
@@ -156,12 +185,12 @@ services:
       KC_DB_USERNAME: "keycloak"
       KC_DB_PASSWORD: "Rs7naJnwoM4cz5Ws"
       KC_DB_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/keycloak"
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
 #      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
-      PROXY_ADDRESS_FORWARDING: true
+      PROXY_ADDRESS_FORWARDING: "true"
       KC_PROXY: edge
-      KC_HOSTNAME_DEBUG: true
+      KC_HOSTNAME_DEBUG: "true"
       KEYCLOAK_ADMIN: "admin"
       KEYCLOAK_ADMIN_PASSWORD: "SuperSecretPassword"
       # Unified Hostname: Keycloak ist unter EINEM Namen erreichbar, der von
@@ -230,7 +259,7 @@ services:
       - eegfaktura-keycloak-json
               
   eegfaktura-admin-web:
-    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.2
+    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.1.3
     hostname: eegfaktura-admin-web
     environment:
       # Wie eegfaktura-web: die Keycloak-URL kommt aus dem Env-Template des Images
@@ -249,7 +278,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.3
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.4
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -272,13 +301,15 @@ services:
       FILESTORE_CREATE_UNKNOWN_CONTAINER: "true"
       FILESTORE_CREATE_UNKNOWN_STORAGE: "true"
     depends_on:
+      eegfaktura-volume-permissions:
+        condition: service_completed_successfully
       eegfaktura-postgresql:
         condition: service_healthy
     secrets:
       - eegfaktura-db-password
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.3
+    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.4
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
