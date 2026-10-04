@@ -45,6 +45,24 @@ one we have actually run together.
 If you want to run a service you built yourself, override just that one in
 `docker-compose.override.yml` instead of editing the pinned versions.
 
+### Services that do not run as root
+
+`eegfaktura-backend`, `eegfaktura-energystore` and `eegfaktura-filestore` run as
+UID/GID 1000, not as root (energystore and filestore since v1.5.0 / v1.0.4). Their data
+volumes, however, belong to root when an older image created them or when the image does
+not create the directory itself — and then the service cannot write.
+
+The one-shot service `eegfaktura-volume-permissions` takes care of this: it runs before
+those three services, changes the owner of their named volumes to `1000:1000` once and
+exits. On later starts it changes nothing. Nothing to do for you when upgrading — just
+`docker compose pull && docker compose up -d`.
+
+If you replaced the named volumes with host directories (bind mounts) in an override
+file, change the owner yourself once: `sudo chown -R 1000:1000 <directory>`.
+
+This needs Docker Compose v2 or docker-compose **1.29 or newer**
+(`depends_on: condition: service_completed_successfully`).
+
 ## ⚙️ Quick Start
 
 Easily run EEGFaktura on your personal computer with a few simple steps.
