@@ -25,6 +25,7 @@ single `docker-compose.yaml`:
 
 The reverse proxy publishes the main app on **http://localhost:8001** and the admin
 portal on **http://localhost:8002**; Keycloak is on **http://eegfaktura-keycloak:8080**.
+For access from another device in the LAN or from WSL, set `DEV_BIND_IP=0.0.0.0`.
 
 ### Image versions
 
@@ -161,3 +162,56 @@ Stammdaten: data/TE100200-Muster-Stammdatenimport.xlsx   (sheet "EEG Stammdaten"
 Energiedaten: data/TEST_EEG_Report_AT00999900000TE100100.xlsx   (sheet "Energiedaten")
 ```
 
+
+## Production deployment
+
+Requires Python 3 on Linux/macOS (setup.py uses os.fchmod) and Docker Compose >= 2.24.4. The default docker-compose.yaml
+remains usable for development. Published development ports bind to localhost
+unless DEV_BIND_IP is set.
+
+Copy .env.production.example into a private settings file. Set URLs, SMTP
+settings and absolute certificate/public-key paths. Create the SMTP password
+file named by `SMTP_PASSWORD_FILE` (mode 600) or replace that setting with
+`SMTP_PASSWORD`. Then run:
+
+    install -m 600 /dev/null /etc/eegfaktura/smtp-password
+    editor /etc/eegfaktura/smtp-password
+
+    python3 setup.py --env-file /etc/eegfaktura/settings.env --output /etc/eegfaktura/production.env
+    docker compose --env-file /etc/eegfaktura/production.env -f docker-compose.yaml -f compose.production.yaml config --quiet
+    docker compose --env-file /etc/eegfaktura/production.env -f docker-compose.yaml -f compose.production.yaml up -d
+
+Setup generates matching Keycloak configuration and initial realm import with
+restricted redirect origins, secret files, and a private Compose env file.
+The generated production realm enables temporary brute-force lockouts with a
+failure factor of 10, a minimum password length of 12 characters, and saved
+user events with a 30-day retention period. The development template is unchanged.
+Existing secrets are preserved on reruns; input settings take precedence.
+An explicit password file also overrides a password retained from a previous run.
+If both a password and its file are specified in the input, the password wins.
+For migration supply existing database passwords and admin-cli secret.
+Setup does not change database passwords or update existing Keycloak realms.
+Apply existing realm changes separately through Keycloak.
+
+JWT_PUBLIC_KEY_FILE must belong to the deployed realm signing key. Setup
+validates its path but does not create or replace a signing key.
+The public-key file must be readable by UID 1000 (for example mode 0644);
+backend, Energystore and filestore run as non-root users. Do not apply these
+permissions to private keys or passwords.
+Production disables database/Keycloak host ports and exposes the TLS proxy.
+Internal services use the public OIDC issuer; Docker DNS must resolve it to
+a reachable TLS endpoint, either the host proxy or a local Keycloak network
+alias. Network topology remains deployment-specific.
+The server and containers must be able to resolve and reach their own public
+Keycloak hostname; configure split DNS or hairpin routing where necessary.
+
+Keep the existing Compose project name when migrating, preserving named volumes.
+Generated secret files are readable inside containers and protected by a private
+host parent directory. The generated env file includes passwords for services
+which accept only environment variables; protect it as a secret.
+
+Healthchecks and depends_on handle Compose startup ordering. Backend and Energystore
+also execute entrypoints/url-poller.sh at every container start, including Docker
+daemon restarts. The script waits for OIDC discovery and then execs the application.
+The backend and Energystore images must provide `curl` for this script.
+WAIT_INTERVAL defaults to two seconds. It does not handle later connection loss.

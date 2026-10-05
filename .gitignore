@@ -1,1 +1,6 @@
 .idea
+.env
+.env.production
+generated/
+
+__pycache__/
