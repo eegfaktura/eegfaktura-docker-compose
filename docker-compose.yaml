@@ -320,7 +320,7 @@ services:
       - eegfaktura-jwt-public-key
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.4
+    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.0.5
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"
