@@ -82,7 +82,7 @@ services:
       - eegfaktura_filestore_data:/volumes/filestore
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.5.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.5.2
     entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
     command: ["energystore", "-configPath", "/etc/energystore/", "-logtostderr=true", "-stderrthreshold=INFO"]
     hostname: eegfaktura-energystore
