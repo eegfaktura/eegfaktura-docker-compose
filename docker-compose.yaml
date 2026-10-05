@@ -232,7 +232,7 @@ services:
         condition: service_healthy
         
   eegfaktura-admin-backend:
-    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.0.3
+    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.0.4
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
