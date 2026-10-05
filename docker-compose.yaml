@@ -124,7 +124,7 @@ services:
       - eegfaktura-filestore   
       
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.1
+    image: ghcr.io/eegfaktura/vfeeg-backend:v1.1.2
     entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
     command: ["vfeeg-backend", "-configPath", "/etc/backend/"]
     hostname: eegfaktura-backend
