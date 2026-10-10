@@ -31,3 +31,13 @@ eda-process-versions:
   ANFORDERUNG_CCMO: "01.20"
   ANFORDERUNG_GN: "03.12"
   AUFHEBUNG_CCMS: "01.30"
+
+# platform#107: retired grid operator numbers -> number they are reachable under
+grid-operator-alias:
+  AT008200: AT008000
+  AT008230: AT008000
+  AT008320: AT008000
+  AT008380: AT008000
+  AT008480: AT008000
+  AT008830: AT008000
+  AT008960: AT008000
