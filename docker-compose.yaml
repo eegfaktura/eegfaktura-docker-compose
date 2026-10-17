@@ -287,7 +287,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.5
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.6
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -301,15 +301,8 @@ services:
       HTTP_FILE_DL_ENDPOINT: "filestore"
       JWT_PUBLIC_KEY_FILE: "/run/secrets/eegfaktura-jwt-public-key"
       FILESTORE_LOCAL_BASE_DIR: "/eegfaktura-filestore-data"
-      # Werte als String quoten: aeltere docker-compose-Versionen (z.B. v1.29.2 auf
-      # Debian 12) lehnen unquoted Booleans als Env-Wert ab ("invalid type").
-      # ACHTUNG: aktiviert Auto-Anlage von Category/Container/Storage — fuer den
-      # First-Run-Komfort dieses Stacks gewollt, aber in Produktion abzuschalten.
-      # Deaktivieren NICHT ueber "false" (der filestore wertet jeden nicht-leeren
-      # String als true), sondern ueber einen leeren Wert ("").
-      FILESTORE_CREATE_UNKNOWN_CATEGORY: "true"
-      FILESTORE_CREATE_UNKNOWN_CONTAINER: "true"
-      FILESTORE_CREATE_UNKNOWN_STORAGE: "true"
+      # Ab filestore v1.0.6 gibt es keine FILESTORE_CREATE_UNKNOWN_*-Schalter mehr: Speicher
+      # und Container einer Gemeinschaft entstehen beim ersten Upload, Kategorien sind fest.
     depends_on:
       eegfaktura-volume-permissions:
         condition: service_completed_successfully
