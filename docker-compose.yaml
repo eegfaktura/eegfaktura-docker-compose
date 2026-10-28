@@ -83,17 +83,13 @@ services:
 
   eegfaktura-energystore:
     image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.7.0
-    entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
-    command: ["energystore", "-configPath", "/etc/energystore/", "-logtostderr=true", "-stderrthreshold=INFO"]
     hostname: eegfaktura-energystore
     environment:
-      WAIT_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}/realms/EEGFaktura/.well-known/openid-configuration"
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
       ENERGYSTORE_SERVICES_master-server: "eegfaktura-backend:9092"
       ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
     volumes:
-      - ./entrypoints/url-poller.sh:/opt/eegfaktura-entrypoint/url-poller.sh:ro
       - eegfaktura_energystore_data:/opt/rawdata
     depends_on:
       eegfaktura-volume-permissions:
@@ -125,17 +121,12 @@ services:
       
   eegfaktura-backend:
     image: ghcr.io/eegfaktura/vfeeg-backend:v1.6.0
-    entrypoint: ["/bin/sh", "/opt/eegfaktura-entrypoint/url-poller.sh"]
-    command: ["vfeeg-backend", "-configPath", "/etc/backend/"]
     hostname: eegfaktura-backend
     volumes:
-      - ./entrypoints/url-poller.sh:/opt/eegfaktura-entrypoint/url-poller.sh:ro
       - eegfaktura_backend_data:/opt/storage
       - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
       - ./templates:/opt/storage/public/templates
     environment:
-      WAIT_URL: "${KEYCLOAK_URL:-http://eegfaktura-keycloak:8080}/realms/EEGFaktura/.well-known/openid-configuration"
-      WRAPPED_ENTRYPOINT: "/usr/local/bin/entrypoint.sh"
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
       VFEEG_BACKEND_DATABASE_PASSWORD: "${DATABASE_PASSWORD:-Dzy5lShLn1N3rqTM}"
