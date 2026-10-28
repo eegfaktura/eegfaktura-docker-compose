@@ -210,8 +210,17 @@ Generated secret files are readable inside containers and protected by a private
 host parent directory. The generated env file includes passwords for services
 which accept only environment variables; protect it as a secret.
 
-Healthchecks and depends_on handle Compose startup ordering. Backend and Energystore
-also execute entrypoints/url-poller.sh at every container start, including Docker
-daemon restarts. The script waits for OIDC discovery and then execs the application.
-The backend and Energystore images must provide `curl` for this script.
-WAIT_INTERVAL defaults to two seconds. It does not handle later connection loss.
+Healthchecks and depends_on handle Compose startup ordering. Keycloak counts as healthy
+only once the realm answers its OIDC discovery (`/realms/EEGFaktura/.well-known/openid-configuration`,
+HTTP 200), i.e. after the realm import; backend, Energystore, eda, the admin backend and
+admin web (in production also the proxy) start only then. In production backend and
+Energystore reach Keycloak through the proxy (`https://AUTH_HOST`), which starts at the same
+moment: on a first start one of them may exit once and be restarted. The check runs inside the Keycloak container with its own bash, so the
+service images need no tool for waiting (no `curl`, `wget` or shell script). This works
+with the current images and with the slim runtime images of backend, Energystore and
+filestore. The services start with their image's own entrypoint and command.
+Docker daemon restarts do not follow depends_on: if backend or Energystore start before
+Keycloak is reachable, they exit and `restart: unless-stopped` (production file) starts
+them again until Keycloak answers. Docker's restart delay doubles up to about a minute, so
+they can stay down that long after Keycloak is ready, and each failed start logs a panic:
+expected while Keycloak starts, not a fault.
