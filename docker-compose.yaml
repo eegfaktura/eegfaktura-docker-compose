@@ -278,7 +278,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.7
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.9
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
