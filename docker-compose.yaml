@@ -82,12 +82,19 @@ services:
       - eegfaktura_filestore_data:/volumes/filestore
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.7.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.10.0
     hostname: eegfaktura-energystore
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
+      # Viper liest Umgebungsvariablen nur in Grossbuchstaben (ENERGYSTORE_ + Schluessel, "." -> "_");
+      # die frueher hier gesetzte Schreibweise "..._master-server" wurde nie gelesen.
       ENERGYSTORE_SERVICES_MASTER-SERVER: "eegfaktura-backend:9092"
+      # Ab energystore v1.9.0: HTTP-Adresse des Backends fuer Energiedaten-Abfragen von Mitglieder-Logins
+      # (GET /participant). Ohne sie bekommen Mitglieder bei Zaehlpunkt-Abfragen 503.
+      ENERGYSTORE_SERVICES_BACKEND-API: "http://eegfaktura-backend:9080"
+      # gRPC zu eda (Versand des Energiedaten-Excel-Berichts per Mail), wie in Produktion.
+      ENERGYSTORE_SERVICES_MAIL-SERVER: "eegfaktura-eda:9093"
       ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
     volumes:
       - eegfaktura_energystore_data:/opt/rawdata
@@ -102,7 +109,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-web:
-    image: ghcr.io/eegfaktura/vfeeg-web:v1.8.0
+    image: ghcr.io/eegfaktura/vfeeg-web:v1.24.0
     hostname: eegfaktura-web
     environment:
       # Das Image rendert /config/keycloak-config.json aus einem Caddy-Template mit diesen
@@ -120,12 +127,11 @@ services:
       - eegfaktura-filestore   
       
   eegfaktura-backend:
-    image: ghcr.io/eegfaktura/vfeeg-backend:v1.6.0
+    image: ghcr.io/eegfaktura/vfeeg-backend:v1.18.0
     hostname: eegfaktura-backend
     volumes:
       - eegfaktura_backend_data:/opt/storage
       - ./eegfaktura-backend-config.yaml:/etc/backend/config.yaml
-      - ./templates:/opt/storage/public/templates
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       VFEEG_BACKEND_DATABASE_USER: "eegfaktura"
@@ -147,7 +153,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-eda:
-    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.5.0
     hostname: eegfaktura-eda
     volumes:
       - eegfaktura_eda_data:/storage/prod 
@@ -176,7 +182,7 @@ services:
       - eegfaktura-keycloak
 
   eegfaktura-keycloak:
-    image: ghcr.io/eegfaktura/eegfaktura-keycloak:v1.0.3
+    image: ghcr.io/eegfaktura/eegfaktura-keycloak:v1.0.4
     hostname: eegfaktura-keycloak
     command: start --optimized --import-realm
     volumes:
@@ -223,7 +229,7 @@ services:
         condition: service_healthy
         
   eegfaktura-admin-backend:
-    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.1.0
+    image: ghcr.io/eegfaktura/eeg-registration-backend:v1.3.0
     hostname: eegfaktura-admin-backend
     command: /opt/docker/bin/eegfaktura-registration
     environment:
@@ -259,7 +265,7 @@ services:
       - eegfaktura-keycloak-json
               
   eegfaktura-admin-web:
-    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.2.0
+    image: ghcr.io/eegfaktura/eeg-registration-frontend:v1.3.0
     hostname: eegfaktura-admin-web
     environment:
       # Wie eegfaktura-web: die Keycloak-URL kommt aus dem Env-Template des Images
@@ -278,7 +284,7 @@ services:
         condition: service_healthy
 
   eegfaktura-filestore:
-    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.0.7
+    image: ghcr.io/eegfaktura/eegfaktura-filestore:v1.2.0
     hostname: eegfaktura-filestore
     volumes:
       - eegfaktura_filestore_data:/eegfaktura-filestore-data
@@ -304,7 +310,7 @@ services:
       - eegfaktura-jwt-public-key
 
   eegfaktura-billing:
-    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.1.0
+    image: ghcr.io/eegfaktura/eegfaktura-billing:v1.12.0
     hostname: eegfaktura-billing
     environment:
       JDBC_DATABASE_URL: "jdbc:postgresql://eegfaktura-postgresql:5432/eegfaktura"

@@ -64,6 +64,42 @@ file, change the owner yourself once: `sudo chown -R 1000:1000 <directory>`.
 This needs Docker Compose v2 or docker-compose **1.29 or newer**
 (`depends_on: condition: service_completed_successfully`).
 
+### Upgrading to the combination of 2026-11-11
+
+The pins match the production release of 2026-11-11: backend v1.18.0, web v1.24.0,
+billing v1.12.0, energystore v1.10.0, eda (kep) v1.5.0, filestore v1.2.0, keycloak v1.0.4,
+admin backend and admin web v1.3.0. Coming from the previous pins (backend v1.6.0, billing
+v1.1.0, ...):
+
+1. **Back up the database first** (`pg_dump` of `eegfaktura`). On its first start the
+   backend migrates the schema (`event.action=db.migrate.done` in its log), billing,
+   filestore and eda migrate their own schemas. The older images do **not** start on the
+   migrated database, so going back means restoring the backup.
+2. `docker compose pull && docker compose up -d`. Do not stop the stack while the backend
+   migrates; it answers only after the migrations. If the backend log shows
+   `db.migrate.dirty`, follow the section "Failed migration (dirty)" in the
+   [backend README](https://github.com/eegfaktura/eegfaktura-backend#readme).
+3. **Member mails:** since backend v1.9.0 hand-made mail templates on the data volume are
+   no longer used. Each community edits its texts in the web app (mail text editor);
+   without a saved text the built-in default is sent. The `templates/` directory and its
+   mount are therefore gone from this repository.
+4. **Own `eegfaktura-eda.application.conf`:** eda v1.5.0 uses one database pool for the
+   whole process. Set `maxConnections=24`, `minConnections=6`, `numThreads=24` (as in the
+   file here), otherwise it runs with a third of the former capacity.
+5. **Existing Keycloak realm:** the realm import does not change an existing realm. If your
+   realm has no role `superuser`, create it (Realm roles → Create role) and assign it to
+   whoever registers communities in the Admin Portal; without it the portal gets 403.
+6. **Logs are JSON lines** in all application services. `LOG_FORMAT=text` gives readable
+   lines; an unknown `LOG_LEVEL` (e.g. `fatal`) stops the service at start.
+
+Changed in this repository with the upgrade, nothing to do unless you keep your own copy:
+energystore now gets the backend's HTTP address (needed since energystore v1.9.0 for the
+energy data of member logins) and the eda address for the Excel report by mail, and its
+backend gRPC address is now actually read (the variable names must be upper case). The admin
+portal reaches energystore under `/energystore` (tool "Energiedaten löschen"). In production
+(`Caddyfile.production`) the proxy refuses the services' probe paths (`/healthz`, `/readyz`)
+and energystore's `/query` from outside, as the production cluster does.
+
 ## ⚙️ Quick Start
 
 Easily run EEGFaktura on your personal computer with a few simple steps.
@@ -101,20 +137,21 @@ cd eegfaktura-docker-compose
 docker compose up
 ```
 
-3. Export the realm signing certificate for the billing service
+3. Export the realm signing certificate for billing and filestore
 
 Keycloak generates a fresh RSA key pair on its **first** start, so the
 `jwt-public-key.pem` shipped in this repository never matches your installation.
-The billing service verifies tokens against that file — without this step every
-call to `/cash/*` fails authentication.
+The billing service and the filestore verify tokens against that file — without this
+step every call to `/cash/*` and `/filestore/*` fails authentication.
 
 Write the current certificate into the file (in place, so the container's mount
-stays valid — no restart needed, billing re-reads the file per request):
+stays valid; billing re-reads the file per request, the filestore reads it at start):
 
 ```bash
 curl -s http://eegfaktura-keycloak:8080/realms/EEGFaktura/protocol/openid-connect/certs \
   | python3 -c "import sys,json,textwrap; k=next(k for k in json.load(sys.stdin)['keys'] if k.get('alg')=='RS256' and k.get('use')=='sig'); print('-----BEGIN CERTIFICATE-----'); print('\n'.join(textwrap.wrap(k['x5c'][0],64))); print('-----END CERTIFICATE-----')" \
   > jwt-public-key.pem
+docker compose restart eegfaktura-filestore
 ```
 
 Alternatively, copy it from the Keycloak admin console under
@@ -128,14 +165,18 @@ yourself — nothing else in the stack refers to them.
 
 - Open Keycloak http://eegfaktura-keycloak:8080 and log in as `admin`, password `SuperSecretPassword`
 - Create a new user in the **EEGFaktura** realm and set a (non-temporary) password
-- Assign the realm role **Manager** to that user
+- Assign the realm roles **Manager** and **superuser** to that user. The admin backend
+  answers every call of the Admin Portal with `403 superuser role required` without
+  `superuser` (since admin backend v1.0.3).
 
 ![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
 
 5. Create an EEG
 
 Open the Admin Portal on http://localhost:8002 and log in with the Manager user
-from step 4. Register a new EEG:
+from step 4. Register a new EEG. Fill in the description ("EEG Beschreibung"): with an
+empty description backend v1.18.0 cannot read the community back, and the web app shows
+an error instead of the EEG.
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
 

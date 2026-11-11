@@ -12,7 +12,6 @@ mqtt:
   qos: 1
 
 file-content:
-  basedir: "/opt/storage/filestore"
   templates: "/opt/storage/public"
 
 grpc-provider:
