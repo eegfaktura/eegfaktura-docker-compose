@@ -87,7 +87,7 @@ services:
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
       ENERGYSTORE_MQTT_HOST: "tcp://eegfaktura-mosquitto:1883"
-      ENERGYSTORE_SERVICES_master-server: "eegfaktura-backend:9092"
+      ENERGYSTORE_SERVICES_MASTER-SERVER: "eegfaktura-backend:9092"
       ENERGYSTORE_PERSISTENCE_PATH: "/opt/rawdata"
     volumes:
       - eegfaktura_energystore_data:/opt/rawdata
