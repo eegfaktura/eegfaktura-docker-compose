@@ -5,11 +5,9 @@
 	respond @probe 403
 }
 
-# energystore: die GraphQL-Schnittstelle /query ist von aussen gesperrt (wie in Produktion).
+# energystore: /query bleibt offen, die web-App laedt darueber Energiedaten aus Excel hoch (GraphQL singleUpload).
 (energystore) {
 	import deny_probes
-	@query path /query /query/
-	respond @query 403
 	reverse_proxy http://eegfaktura-energystore:8080
 }
 
