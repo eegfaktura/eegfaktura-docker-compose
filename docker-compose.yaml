@@ -155,6 +155,9 @@ services:
   eegfaktura-eda:
     image: ghcr.io/eegfaktura/eegfaktura-kep:v1.5.0
     hostname: eegfaktura-eda
+    environment:
+      # Absender der Mails an Mitglieder (eda schickt ueber eegfaktura-postfix, siehe eegfaktura-eda.application.conf)
+      EMAIL_ADMIN_FROM: "${SMTP_EMAIL:-eegfaktura@yourdomain.com}"
     volumes:
       - eegfaktura_eda_data:/storage/prod 
       - ./eegfaktura-eda.application.conf:/conf/application.conf 
@@ -165,6 +168,8 @@ services:
         condition: service_started
       eegfaktura-keycloak:
         condition: service_healthy
+      eegfaktura-postfix:
+        condition: service_started
 
   eegfaktura-proxy:
     image: caddy:2.11.4
