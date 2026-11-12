@@ -56,7 +56,7 @@ not create the directory itself — and then the service cannot write.
 The one-shot service `eegfaktura-volume-permissions` takes care of this: it runs before
 those three services, changes the owner of their named volumes to `1000:1000` once and
 exits. On later starts it changes nothing. Nothing to do for you when upgrading — just
-`docker compose pull && docker compose up -d`.
+`docker compose pull && docker compose up -d` (production: with the files of "Production deployment").
 
 If you replaced the named volumes with host directories (bind mounts) in an override
 file, change the owner yourself once: `sudo chown -R 1000:1000 <directory>`.
@@ -71,25 +71,42 @@ billing v1.12.0, energystore v1.10.0, eda (kep) v1.5.0, filestore v1.2.0, keyclo
 admin backend and admin web v1.3.0. Coming from the previous pins (backend v1.6.0, billing
 v1.1.0, ...):
 
-1. **Back up the database first** (`pg_dump` of `eegfaktura`). On its first start the
-   backend migrates the schema (`event.action=db.migrate.done` in its log), billing,
-   filestore and eda migrate their own schemas. The older images do **not** start on the
-   migrated database, so going back means restoring the backup.
-2. `docker compose pull && docker compose up -d`. Do not stop the stack while the backend
-   migrates; it answers only after the migrations. If the backend log shows
-   `db.migrate.dirty`, follow the section "Failed migration (dirty)" in the
-   [backend README](https://github.com/eegfaktura/eegfaktura-backend#readme).
-3. **Member mails:** since backend v1.9.0 hand-made mail templates on the data volume are
+1. **Back up the database first** (`pg_dump` of `eegfaktura`) and **wait until the dump has
+   finished**: the backend's migrations wait at most 60 s for a lock, a running dump or a long
+   transaction makes them fail. On its first start the backend migrates its schema
+   (`event.action=db.migrate.done` in its log) and billing migrates its own (Flyway). The older
+   images do not start on the migrated database; to go back, restore the backup (or follow
+   "Rollback to an older image" in the
+   [backend README](https://github.com/eegfaktura/eegfaktura-backend#readme)).
+2. Pull and start — with the same files and options you run the stack with:
+   - development: `docker compose pull && docker compose up -d`
+   - production: `docker compose --env-file /etc/eegfaktura/production.env -f docker-compose.yaml -f compose.production.yaml pull`,
+     then the same with `up -d` (see "Production deployment"). Without `compose.production.yaml`
+     the containers start with the development settings (no TLS, default passwords).
+
+   The API is down while the backend migrates (one instance); do not stop the stack meanwhile.
+   If the backend log shows `db.migrate.dirty`, follow "Failed migration (dirty)" in the
+   backend README.
+3. **`git pull` of this repository:** the directory `templates/` is gone. If you edited those
+   files, git refuses the pull; keep a copy elsewhere or delete them — they are not used anymore
+   (next point).
+4. **Member mails:** since backend v1.9.0 hand-made mail templates on the data volume are
    no longer used. Each community edits its texts in the web app (mail text editor);
-   without a saved text the built-in default is sent. The `templates/` directory and its
-   mount are therefore gone from this repository.
-4. **Own `eegfaktura-eda.application.conf`:** eda v1.5.0 uses one database pool for the
-   whole process. Set `maxConnections=24`, `minConnections=6`, `numThreads=24` (as in the
-   file here), otherwise it runs with a third of the former capacity.
-5. **Existing Keycloak realm:** the realm import does not change an existing realm. If your
+   without a saved text the built-in default is sent.
+5. **Mails sent by eda** (consent request, metering point active/inactive, the energy data
+   report) now go through `eegfaktura-postfix` like billing's, with `SMTP_EMAIL` as sender. Before,
+   eda had no mail server configured in this stack and could not send them.
+6. **mosquitto** gets `mosquitto/mosquitto.conf` with higher queue limits (as in production):
+   energystore acknowledges messages itself since v1.8.0, and with mosquitto's defaults a large
+   energy data request could lose messages without any log line. The image is pinned by digest.
+7. **Own `eegfaktura-eda.application.conf`:** eda v1.5.0 needs `profile = "slick.jdbc.PostgresProfile$"`
+   under `slick.pgsql.local` (instead of `driver`/`dataSourceClass`) and uses one database pool for
+   the whole process (24/6/24 is its built-in default; a smaller value in your copy limits it).
+8. **Existing Keycloak realm:** the realm import does not change an existing realm. If your
    realm has no role `superuser`, create it (Realm roles → Create role) and assign it to
    whoever registers communities in the Admin Portal; without it the portal gets 403.
-6. **Logs are JSON lines** in all application services. `LOG_FORMAT=text` gives readable
+   `superuser` is the operator role: it may access every community.
+9. **Logs are JSON lines** in all application services. `LOG_FORMAT=text` gives readable
    lines; an unknown `LOG_LEVEL` (e.g. `fatal`) stops the service at start.
 
 Changed in this repository with the upgrade, nothing to do unless you keep your own copy:
@@ -98,7 +115,7 @@ energy data of member logins) and the eda address for the Excel report by mail, 
 backend gRPC address is now actually read (the variable names must be upper case). The admin
 portal reaches energystore under `/energystore` (tool "Energiedaten löschen"). In production
 (`Caddyfile.production`) the proxy refuses the services' probe paths (`/healthz`, `/readyz`)
-and energystore's `/query` from outside, as the production cluster does.
+from outside, as the production cluster does.
 
 ## ⚙️ Quick Start
 
@@ -167,7 +184,8 @@ yourself — nothing else in the stack refers to them.
 - Create a new user in the **EEGFaktura** realm and set a (non-temporary) password
 - Assign the realm roles **Manager** and **superuser** to that user. The admin backend
   answers every call of the Admin Portal with `403 superuser role required` without
-  `superuser` (since admin backend v1.0.3).
+  `superuser` (since admin backend v1.0.3). `superuser` is the operator role and may access
+  every community — give it only to operators, not to community admins.
 
 ![image](https://github.com/user-attachments/assets/81b1168e-e867-4192-a1f3-326820d8e7a5)
 
@@ -176,7 +194,7 @@ yourself — nothing else in the stack refers to them.
 Open the Admin Portal on http://localhost:8002 and log in with the Manager user
 from step 4. Register a new EEG. Fill in the description ("EEG Beschreibung"): with an
 empty description backend v1.18.0 cannot read the community back, and the web app shows
-an error instead of the EEG.
+an error instead of the EEG (fixed in eegfaktura/eegfaktura-backend#161, with the next backend release).
 
 ![image](https://github.com/user-attachments/assets/12275efa-10c8-46ba-b8e5-3df0cd500477)
 
