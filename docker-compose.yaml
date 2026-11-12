@@ -30,10 +30,12 @@ services:
       - eegfaktura-keycloak-db-password
           
   eegfaktura-mosquitto:
-    image: ghcr.io/eegfaktura/eegfaktura-mosquitto:latest
+    # fest per Digest (das Image hat ausser "latest"/"main" nur den alten Tag 0.1.0 von 2023); Stand 2025-09-23
+    image: ghcr.io/eegfaktura/eegfaktura-mosquitto@sha256:33d8365f3eacf86d85d3530d76594cb3e0f5a10e1217c214c62d9432c0c17116
     hostname: eegfaktura-mosquitto
     command: /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf
     volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - eegfaktura_mosquitto_data:/mosquitto/data
       - eegfaktura_mosquitto_log:/mosquitto/log
 
