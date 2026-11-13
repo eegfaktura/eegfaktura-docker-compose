@@ -1,14 +1,29 @@
+# Wie die Produktion (gitops ingress-probe-paths): die Probe-Pfade der Dienste (/healthz, /readyz,
+# ohne Bearer-Token) sind von aussen gesperrt; Docker-Healthchecks gehen direkt an den Container.
+(deny_probes) {
+	@probe path /healthz /healthz/ /readyz /readyz/
+	respond @probe 403
+}
+
+# energystore: /query bleibt offen, die web-App laedt darueber Energiedaten aus Excel hoch (GraphQL singleUpload).
+(energystore) {
+	import deny_probes
+	reverse_proxy http://eegfaktura-energystore:8080
+}
+
 {$WEB_HOST} {
     tls /certs/fullchain.pem /certs/privkey.pem
 	handle_path /api/* {
+	    import deny_probes
 	    reverse_proxy http://eegfaktura-backend:9080
 	}
 
 	handle_path /energystore/* {
-	    reverse_proxy http://eegfaktura-energystore:8080
+	    import energystore
 	}
 
 	handle_path /filestore/* {
+	    import deny_probes
 	    reverse_proxy http://eegfaktura-filestore:8080
 	}
 
@@ -24,15 +39,23 @@
 {$ADMIN_HOST} {
     tls /certs/fullchain.pem /certs/privkey.pem
 	handle_path /eeg/* {
+	    import deny_probes
 	    reverse_proxy http://eegfaktura-admin-backend:8085
 	}
 
 	handle_path /vfeeg/* {
+	    import deny_probes
 	    reverse_proxy http://eegfaktura-admin-backend:8085
 	}
 
 	handle_path /admin/* {
+	    import deny_probes
 	    reverse_proxy http://eegfaktura-admin-backend:8085
+	}
+
+	# Admin-Portal (ab v1.1.0): Werkzeug "Energiedaten loeschen" ruft energystore auf dem Admin-Host auf
+	handle_path /energystore/* {
+	    import energystore
 	}
 
 	handle_path /* {

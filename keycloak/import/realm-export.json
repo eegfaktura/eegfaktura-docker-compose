@@ -105,6 +105,13 @@
         "attributes": {}
       },
       {
+        "name": "superuser",
+        "description": "Operator role of the admin portal (EEG registration, cross-community admin)",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {}
+      },
+      {
         "id": "a7c347cc-efa0-4b7b-b2a7-d5192f3ccfae",
         "name": "offline_access",
         "description": "${role_offline-access}",
