@@ -155,7 +155,7 @@ services:
       - eegfaktura-keycloak-json
       
   eegfaktura-eda:
-    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.5.0
+    image: ghcr.io/eegfaktura/eegfaktura-kep:v1.6.0
     hostname: eegfaktura-eda
     environment:
       # Absender der Mails an Mitglieder (eda schickt ueber eegfaktura-postfix, siehe eegfaktura-eda.application.conf)
