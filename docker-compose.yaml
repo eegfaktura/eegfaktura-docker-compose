@@ -84,7 +84,7 @@ services:
       - eegfaktura_filestore_data:/volumes/filestore
 
   eegfaktura-energystore:
-    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.10.0
+    image: ghcr.io/eegfaktura/eegfaktura-energystore:v1.11.0
     hostname: eegfaktura-energystore
     environment:
       KEYCLOAK_CONFIG: "/run/secrets/eegfaktura-keycloak-json"
