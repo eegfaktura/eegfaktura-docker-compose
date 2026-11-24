@@ -781,7 +781,7 @@
       "id": "cac11bcf-7ea7-4467-82cf-7379b0265611",
       "clientId": "at.ourproject.vfeeg.admin",
       "name": "",
-      "description": "Admin-Frontend (vfeeg-registration). Scala/Akka-Backend (eeg-registration-backend) erwartet aud=at.ourproject.vfeeg.admin im Token — daher `admin-audience` protocolMapper (siehe unten).",
+      "description": "Administration für den VFEEG-Support",
       "rootUrl": "http://localhost:9091",
       "adminUrl": "http://localhost:8002",
       "baseUrl": "http://localhost:8080",
